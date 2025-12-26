@@ -2,6 +2,8 @@
 
 A high-performance web-based utility designed to maximize the yield of circular parts from rectangular material sheets. Built with React and Tailwind CSS, this tool uses hexagonal (honeycomb) packing algorithms to provide significantly higher density than standard grid-based layouts.
 
+View the generator at https://creuzerm.github.io/circle-optimizer/ 
+
 ## 🚀 Features
 
 * **Hexagonal Packing Logic**: Calculates the most efficient honeycomb arrangement to minimize wasted space.
