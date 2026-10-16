@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="src/packing.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -109,57 +110,6 @@
                 }
             };
 
-            const calculateGridTotal = (w, h, d, gap) => {
-                const effectiveD = d + gap;
-                const nx = Math.floor((w - d + 0.000001) / effectiveD) + 1;
-                const ny = Math.floor((h - d + 0.000001) / effectiveD) + 1;
-                return Math.max(0, nx) * Math.max(0, ny);
-            };
-
-            const calculateLayout = (w, h, d, gap) => {
-                const effectiveD = d + gap;
-                const dy = effectiveD * (Math.sqrt(3) / 2);
-                const numRows = Math.floor((h - d + 0.000001) / dy) + 1;
-                if (numRows <= 0 || w < d) return { total: 0, rowData: [], dy: 0, numRows: 0 };
-                let total = 0;
-                const rowData = [];
-                for (let i = 0; i < numRows; i++) {
-                    const rowOffset = i % 2 !== 0 ? effectiveD / 2 : 0;
-                    const count = Math.floor((w - rowOffset - d + 0.000001) / effectiveD) + 1;
-                    if (count > 0) {
-                        total += count;
-                        rowData.push({ count, offset: rowOffset });
-                    }
-                }
-                return { total, rowData, dy, numRows: rowData.length };
-            };
-
-            const getCirclePositions = (layout, width, height, diameter, margin, gap, isRotated) => {
-                if (!layout) return [];
-                const r = diameter / 2;
-                const effectiveD = diameter + gap;
-                const packingW = isRotated ? height - (margin * 2) : width - (margin * 2);
-                const packingH = isRotated ? width - (margin * 2) : height - (margin * 2);
-
-                const maxRowWidth = Math.max(...layout.rowData.map(row => (row.count - 1) * effectiveD + diameter + row.offset));
-                const patternH = (layout.numRows - 1) * layout.dy + diameter;
-
-                const startX = margin + (packingW - maxRowWidth) / 2;
-                const startY = margin + (packingH - patternH) / 2;
-
-                const circles = [];
-                layout.rowData.forEach((row, rowIndex) => {
-                    const py = startY + r + (rowIndex * layout.dy);
-                    for (let i = 0; i < row.count; i++) {
-                        const px = startX + r + (i * effectiveD) + row.offset;
-                        const cx = isRotated ? py : px;
-                        const cy = isRotated ? px : py;
-                        circles.push({ x: cx, y: cy, r });
-                    }
-                });
-                return circles;
-            };
-
             useEffect(() => {
                 const { width, height, diameter, margin, gap, enableFiller, fillerDiameter } = config;
                 const usableW = width - (margin * 2);
@@ -168,11 +118,11 @@
                     setResults({ total: 0, gridTotal: 0, layout: null, isRotated: false, largeCircles: [], fillerCircles: [], fillerTotal: 0 });
                     return;
                 }
-                const gridA = calculateGridTotal(usableW, usableH, diameter, gap);
-                const gridB = calculateGridTotal(usableH, usableW, diameter, gap);
+                const gridA = window.calculateGridTotal(usableW, usableH, diameter, gap);
+                const gridB = window.calculateGridTotal(usableH, usableW, diameter, gap);
                 const maxGrid = Math.max(gridA, gridB);
-                const layoutA = calculateLayout(usableW, usableH, diameter, gap);
-                const layoutB = calculateLayout(usableH, usableW, diameter, gap);
+                const layoutA = window.calculateLayout(usableW, usableH, diameter, gap);
+                const layoutB = window.calculateLayout(usableH, usableW, diameter, gap);
 
                 let layout, isRotated, total;
                 if (layoutA.total >= layoutB.total && layoutA.total > 0) {
@@ -188,26 +138,20 @@
                     return;
                 }
 
-                const largeCircles = getCirclePositions(layout, width, height, diameter, margin, gap, isRotated);
+                const largeCircles = window.getCirclePositions(layout, width, height, diameter, margin, gap, isRotated);
 
                 let fillerCircles = [];
                 if (enableFiller && fillerDiameter > 0) {
                     // Generate filler candidates for the whole sheet in standard orientation
                     // We assume standard orientation for filler grid for simplicity
-                    const fillerLayout = calculateLayout(usableW, usableH, fillerDiameter, gap);
-                    const fillerCandidates = getCirclePositions(fillerLayout, width, height, fillerDiameter, margin, gap, false);
+                    const fillerLayout = window.calculateLayout(usableW, usableH, fillerDiameter, gap);
+                    const fillerCandidates = window.getCirclePositions(fillerLayout, width, height, fillerDiameter, margin, gap, false);
 
-                    const minDist = (diameter / 2) + (fillerDiameter / 2) + gap;
-                    const minDistSq = minDist * minDist;
-
-                    // Filter collisions
+                    // Filter collisions using checkOverlap
                     for (const filler of fillerCandidates) {
                         let collision = false;
                         for (const large of largeCircles) {
-                            const dx = filler.x - large.x;
-                            const dy = filler.y - large.y;
-                            const distSq = dx*dx + dy*dy;
-                            if (distSq < minDistSq - 0.0001) {
+                            if (window.checkOverlap(filler, large, gap)) {
                                 collision = true;
                                 break;
                             }
