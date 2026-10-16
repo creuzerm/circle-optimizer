@@ -1,0 +1,27 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "A high-performance web-based utility designed to maximize the yield of circular parts from rectangular material sheets. Built with React and Tailwind CSS, this tool uses hexagonal (honeycomb) packing algorithms to provide significantly higher density than standard grid-based layouts.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/creuzerm/circle-optimizer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/creuzerm/circle-optimizer/issues"
+  },
+  "homepage": "https://github.com/creuzerm/circle-optimizer#readme",
+  "devDependencies": {
+    "jest": "^30.5.2"
+  }
+}
