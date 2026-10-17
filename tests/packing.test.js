@@ -114,6 +114,8 @@ describe('PackingUtils.isCircleInConvexHull', () => {
         ];
         const circle = { x: 5, y: 5, r: 2 }; // Center is on the hypotenuse
         expect(PackingUtils.isCircleInConvexHull(circle, triangle, 1e-8)).toBe(false);
+    });
+});
 
 const {
     calculateGridTotal,
@@ -581,3 +583,5 @@ describe('non-axis-aligned bounding polygon containment', () => {
         // A circle at (5,5) with radius 3.5355 should be roughly tangent
         const r = 5 / Math.sqrt(2);
         expect(isCircleInPolygon({ x: 5, y: 5, r: r }, polygon)).toBe(true);
+    });
+});
