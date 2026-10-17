@@ -4,7 +4,17 @@
     module.exports = factory();
   } else {
     // Browser globals
-    root.PackingUtils = factory();
+    const utils = factory();
+    root.PackingUtils = utils;
+    if (typeof Object.assign === 'function') {
+      Object.assign(root, utils);
+    } else {
+      for (let k in utils) {
+        if (Object.prototype.hasOwnProperty.call(utils, k)) {
+          root[k] = utils[k];
+        }
+      }
+    }
   }
 }(typeof window !== 'undefined' ? window : this, function () {
 
@@ -65,33 +75,25 @@
       const distSq = dx * dx + dy * dy;
       const minDist = c1.r + c2.r;
       const minDistSq = minDist * minDist;
-      // If distance squared is strictly less than minDistSq - epsilon, we consider it a collision
       return distSq < minDistSq - epsilon;
   };
 
   const isCircleInConvexHull = (circle, polygon, epsilon = 0.0001) => {
-      // Polygon should be an array of objects {x, y} in counter-clockwise order
       if (!polygon || polygon.length < 3) return false;
       for (let i = 0; i < polygon.length; i++) {
           const p1 = polygon[i];
           const p2 = polygon[(i + 1) % polygon.length];
 
-          // Edge vector
           const edgeX = p2.x - p1.x;
           const edgeY = p2.y - p1.y;
           const edgeLength = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
 
-          // Vector from p1 to circle center
           const cx = circle.x - p1.x;
           const cy = circle.y - p1.y;
 
-          // Cross product to find distance from point to line segment
-          // A negative cross product means the point is on the "outside" (right side) of the counter-clockwise edge
           const cross = edgeX * cy - edgeY * cx;
           const distance = cross / edgeLength;
 
-          // The distance from the center of the circle to the edge should be >= circle.r
-          // Epsilon allows tolerance
           if (distance < circle.r - epsilon) {
               return false;
           }
@@ -99,12 +101,187 @@
       return true;
   };
 
+  // Additional Geometry functions
+  const checkOverlap = (c1, c2, gap = 0) => {
+      const dx = c1.x - c2.x;
+      const dy = c1.y - c2.y;
+      const distSq = dx * dx + dy * dy;
+      const minDist = c1.r + c2.r + gap;
+      return distSq < minDist * minDist - 0.0001;
+  };
+
+  const clampToRectangularBoundary = (circle, width, height, margin = 0) => {
+      let { x, y, r } = circle;
+      const minX = margin + r;
+      const maxX = width - margin - r;
+      const minY = margin + r;
+      const maxY = height - margin - r;
+
+      if (minX > maxX || minY > maxY) {
+          return null;
+      }
+
+      x = Math.max(minX, Math.min(x, maxX));
+      y = Math.max(minY, Math.min(y, maxY));
+
+      if (x === circle.x && y === circle.y) {
+          return { ...circle };
+      }
+
+      return { x, y, r };
+  };
+
+  const clampToCircularBoundary = (circle, containerX, containerY, containerR, margin = 0) => {
+      const { x, y, r } = circle;
+      const dx = x - containerX;
+      const dy = y - containerY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      const maxDist = containerR - margin - r;
+
+      if (maxDist < 0) return null;
+
+      if (dist <= maxDist) {
+          return { ...circle };
+      }
+
+      const ratio = maxDist / dist;
+      return {
+          x: containerX + dx * ratio,
+          y: containerY + dy * ratio,
+          r
+      };
+  };
+
+  const calculateDensity = (circles, containerArea) => {
+      if (!circles || circles.length === 0 || containerArea <= 0) return 0;
+      const totalCircleArea = circles.reduce((acc, c) => acc + (Math.PI * c.r * c.r), 0);
+      return totalCircleArea / containerArea;
+  };
+
+  const dist2 = (v, w) => (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
+
+  const distToSegmentSquared = (p, v, w) => {
+      const l2 = dist2(v, w);
+      if (l2 === 0) return dist2(p, v);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return dist2(p, { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) });
+  };
+
+  const pointInPolygon = (p, polygon) => {
+      let isInside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+          const xi = polygon[i].x, yi = polygon[i].y;
+          const xj = polygon[j].x, yj = polygon[j].y;
+          const intersect = ((yi > p.y) !== (yj > p.y)) && (p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi);
+          if (intersect) isInside = !isInside;
+      }
+      return isInside;
+  };
+
+  const distanceToPolygonEdge = (circle, polygon) => {
+      let minDistSq = Infinity;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+          const dSq = distToSegmentSquared(circle, polygon[j], polygon[i]);
+          if (dSq < minDistSq) {
+              minDistSq = dSq;
+          }
+      }
+      return Math.sqrt(minDistSq);
+  };
+
+  const isCircleInPolygon = (circle, polygon) => {
+      if (!pointInPolygon(circle, polygon)) return false;
+      const dist = distanceToPolygonEdge(circle, polygon);
+      return dist >= circle.r - 0.0001;
+  };
+
+  const calculateTotalArea = (circles) => {
+      if (!circles || !Array.isArray(circles) || circles.length === 0) return 0;
+      return circles.reduce((acc, c) => acc + (Math.PI * c.r * c.r), 0);
+  };
+
+  const calculateVoidArea = (circles, containerArea) => {
+      if (typeof containerArea !== 'number' || containerArea <= 0) return 0;
+      const totalArea = calculateTotalArea(circles);
+      return Math.max(0, containerArea - totalArea);
+  };
+
+  const calculateScrapPercentage = (circles, containerArea) => {
+      if (typeof containerArea !== 'number' || containerArea <= 0) return 0;
+      if (!circles || !Array.isArray(circles) || circles.length === 0) return 100;
+
+      const voidArea = calculateVoidArea(circles, containerArea);
+      return (voidArea / containerArea) * 100;
+  };
+
+  const calculateConvexHull = (points) => {
+      if (!points) return null;
+      if (points.length <= 1) return points || [];
+
+      const sorted = [...points].sort((a, b) => {
+          if (a.x !== b.x) return a.x - b.x;
+          return a.y - b.y;
+      });
+
+      const cross = (o, a, b) => {
+          return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+      };
+
+      const lower = [];
+      for (let i = 0; i < sorted.length; i++) {
+          while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], sorted[i]) <= 0) {
+              lower.pop();
+          }
+          lower.push(sorted[i]);
+      }
+
+      const upper = [];
+      for (let i = sorted.length - 1; i >= 0; i--) {
+          while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], sorted[i]) <= 0) {
+              upper.pop();
+          }
+          upper.push(sorted[i]);
+      }
+
+      upper.pop();
+      lower.pop();
+      return lower.concat(upper);
+  };
+
+  const calculatePolygonPerimeter = (polygon) => {
+      if (!polygon || polygon.length < 2) return 0;
+      let perimeter = 0;
+      for (let i = 0; i < polygon.length; i++) {
+          const next = (i + 1) % polygon.length;
+          const dx = polygon[next].x - polygon[i].x;
+          const dy = polygon[next].y - polygon[i].y;
+          perimeter += Math.sqrt(dx * dx + dy * dy);
+      }
+      return perimeter;
+  };
+
   return {
     calculateGridTotal,
     calculateLayout,
     getCirclePositions,
     checkCircleCollision,
-    isCircleInConvexHull
+    isCircleInConvexHull,
+    checkOverlap,
+    clampToRectangularBoundary,
+    clampToCircularBoundary,
+    calculateDensity,
+    dist2,
+    distToSegmentSquared,
+    pointInPolygon,
+    distanceToPolygonEdge,
+    isCircleInPolygon,
+    calculateTotalArea,
+    calculateVoidArea,
+    calculateScrapPercentage,
+    calculateConvexHull,
+    calculatePolygonPerimeter
   };
 
 }));
