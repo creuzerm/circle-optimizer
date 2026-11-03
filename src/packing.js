@@ -80,22 +80,30 @@
 
   const isCircleInConvexHull = (circle, polygon, epsilon = 0.0001) => {
       if (!polygon || polygon.length < 3) return false;
+
+      const threshold = circle.r - epsilon;
+
       for (let i = 0; i < polygon.length; i++) {
           const p1 = polygon[i];
           const p2 = polygon[(i + 1) % polygon.length];
 
           const edgeX = p2.x - p1.x;
           const edgeY = p2.y - p1.y;
-          const edgeLength = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
+          const edgeSq = edgeX * edgeX + edgeY * edgeY;
 
           const cx = circle.x - p1.x;
           const cy = circle.y - p1.y;
 
           const cross = edgeX * cy - edgeY * cx;
-          const distance = cross / edgeLength;
 
-          if (distance < circle.r - epsilon) {
-              return false;
+          if (threshold > 0) {
+              if (cross < 0 || (cross * cross) / edgeSq < threshold * threshold) {
+                  return false;
+              }
+          } else {
+              if (cross < 0 && (cross * cross) / edgeSq > threshold * threshold) {
+                  return false;
+              }
           }
       }
       return true;
@@ -180,7 +188,7 @@
       return isInside;
   };
 
-  const distanceToPolygonEdge = (circle, polygon) => {
+  const distanceToPolygonEdgeSquared = (circle, polygon) => {
       let minDistSq = Infinity;
       for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
           const dSq = distToSegmentSquared(circle, polygon[j], polygon[i]);
@@ -188,13 +196,19 @@
               minDistSq = dSq;
           }
       }
-      return Math.sqrt(minDistSq);
+      return minDistSq;
+  };
+
+  const distanceToPolygonEdge = (circle, polygon) => {
+      return Math.sqrt(distanceToPolygonEdgeSquared(circle, polygon));
   };
 
   const isCircleInPolygon = (circle, polygon) => {
       if (!pointInPolygon(circle, polygon)) return false;
-      const dist = distanceToPolygonEdge(circle, polygon);
-      return dist >= circle.r - 0.0001;
+      const threshold = circle.r - 0.0001;
+      if (threshold <= 0) return true;
+      const distSq = distanceToPolygonEdgeSquared(circle, polygon);
+      return distSq >= threshold * threshold;
   };
 
   const calculateTotalArea = (circles) => {
