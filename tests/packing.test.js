@@ -51,6 +51,18 @@ describe('PackingUtils.checkCircleCollision', () => {
 
         assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, epsilon), false);
     });
+
+    test('should return identical results to Math.hypot logic (baseline check)', () => {
+        const c1 = { x: 10, y: 15, r: 4 };
+        const c2 = { x: 13, y: 19, r: 3 }; // dist is exactly 5. 5 < 7
+
+        const dx = c2.x - c1.x;
+        const dy = c2.y - c1.y;
+        const hypotDist = Math.hypot(dx, dy);
+        const expected = hypotDist < c1.r + c2.r;
+
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, 0), expected);
+    });
 });
 
 describe('PackingUtils.isCircleInConvexHull', () => {

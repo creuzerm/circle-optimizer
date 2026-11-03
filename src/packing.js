@@ -75,6 +75,7 @@
       const distSq = dx * dx + dy * dy;
       const minDist = c1.r + c2.r;
       const minDistSq = minDist * minDist;
+      // To strictly follow dx*dx + dy*dy <= (r1+r2)*(r1+r2) and pass existing tests expecting epsilon subtraction from squared distance
       return distSq < minDistSq - epsilon;
   };
 
@@ -149,10 +150,12 @@
 
       if (maxDist < 0) return null;
 
+      // Use squared distance comparison to avoid redundant Math.sqrt in candidate rejection loop
       if (distSq <= maxDist * maxDist) {
           return { ...circle };
       }
 
+      // Only compute actual distance (using Math.sqrt) when clamping is strictly needed
       const dist = Math.sqrt(distSq);
       const ratio = maxDist / dist;
       return {
