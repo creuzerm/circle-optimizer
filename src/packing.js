@@ -143,16 +143,17 @@
       const { x, y, r } = circle;
       const dx = x - containerX;
       const dy = y - containerY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const distSq = dx * dx + dy * dy;
 
       const maxDist = containerR - margin - r;
 
       if (maxDist < 0) return null;
 
-      if (dist <= maxDist) {
+      if (distSq <= maxDist * maxDist) {
           return { ...circle };
       }
 
+      const dist = Math.sqrt(distSq);
       const ratio = maxDist / dist;
       return {
           x: containerX + dx * ratio,
