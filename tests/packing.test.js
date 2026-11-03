@@ -1,29 +1,31 @@
+const { describe, test, it } = require('node:test');
+const assert = require('node:assert');
 const PackingUtils = require('../src/packing.js');
 
 describe('PackingUtils.checkCircleCollision', () => {
     test('should return false for separate circles', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 12, y: 0, r: 5 };
-        expect(PackingUtils.checkCircleCollision(c1, c2, 1e-8)).toBe(false);
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, 1e-8), false);
     });
 
     test('should return true for overlapping circles', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 8, y: 0, r: 5 };
-        expect(PackingUtils.checkCircleCollision(c1, c2, 1e-8)).toBe(true);
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, 1e-8), true);
     });
 
     test('should return false for strictly tangent circles', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 10, y: 0, r: 5 };
         // With an epsilon, tangent circles should NOT be considered overlapping
-        expect(PackingUtils.checkCircleCollision(c1, c2, 1e-8)).toBe(false);
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, 1e-8), false);
     });
 
     test('should return false for strictly tangent circles with different radii', () => {
         const c1 = { x: 0, y: 0, r: 3 };
         const c2 = { x: 7, y: 0, r: 4 };
-        expect(PackingUtils.checkCircleCollision(c1, c2, 1e-8)).toBe(false);
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, 1e-8), false);
     });
 
     test('should detect collision when distance is exactly (minDist - epsilon)', () => {
@@ -35,7 +37,7 @@ describe('PackingUtils.checkCircleCollision', () => {
         const dist = Math.sqrt(distSq);
         const c2 = { x: dist, y: 0, r: 5 };
 
-        expect(PackingUtils.checkCircleCollision(c1, c2, epsilon)).toBe(true);
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, epsilon), true);
     });
 
     test('should not detect collision when distance is exactly (minDist - epsilon) + tiny', () => {
@@ -47,7 +49,7 @@ describe('PackingUtils.checkCircleCollision', () => {
         const dist = Math.sqrt(distSq);
         const c2 = { x: dist, y: 0, r: 5 };
 
-        expect(PackingUtils.checkCircleCollision(c1, c2, epsilon)).toBe(false);
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, epsilon), false);
     });
 });
 
@@ -60,7 +62,7 @@ describe('PackingUtils.isCircleInConvexHull', () => {
             { x: 0, y: 10 }
         ];
         const circle = { x: 5, y: 5, r: 2 };
-        expect(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8)).toBe(true);
+        assert.strictEqual(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8), true);
     });
 
     test('should return false if circle intersects rectangle edge', () => {
@@ -71,7 +73,7 @@ describe('PackingUtils.isCircleInConvexHull', () => {
             { x: 0, y: 10 }
         ];
         const circle = { x: 1, y: 5, r: 2 }; // Distance to x=0 edge is 1, which is < r (2)
-        expect(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8)).toBe(false);
+        assert.strictEqual(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8), false);
     });
 
     test('should return false if circle is fully outside the rectangle', () => {
@@ -82,7 +84,7 @@ describe('PackingUtils.isCircleInConvexHull', () => {
             { x: 0, y: 10 }
         ];
         const circle = { x: 15, y: 5, r: 2 };
-        expect(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8)).toBe(false);
+        assert.strictEqual(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8), false);
     });
 
     test('should return true for circle tangent to inner edge of rectangle', () => {
@@ -93,7 +95,7 @@ describe('PackingUtils.isCircleInConvexHull', () => {
             { x: 0, y: 10 }
         ];
         const circle = { x: 2, y: 5, r: 2 }; // Distance to x=0 edge is 2, == r (2)
-        expect(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8)).toBe(true);
+        assert.strictEqual(PackingUtils.isCircleInConvexHull(circle, rect, 1e-8), true);
     });
 
     test('should return true if circle is fully inside a triangle', () => {
@@ -103,7 +105,7 @@ describe('PackingUtils.isCircleInConvexHull', () => {
             { x: 0, y: 10 }
         ];
         const circle = { x: 2, y: 2, r: 1 };
-        expect(PackingUtils.isCircleInConvexHull(circle, triangle, 1e-8)).toBe(true);
+        assert.strictEqual(PackingUtils.isCircleInConvexHull(circle, triangle, 1e-8), true);
     });
 
     test('should return false if circle intersects triangle edge', () => {
@@ -113,7 +115,7 @@ describe('PackingUtils.isCircleInConvexHull', () => {
             { x: 0, y: 10 }
         ];
         const circle = { x: 5, y: 5, r: 2 }; // Center is on the hypotenuse
-        expect(PackingUtils.isCircleInConvexHull(circle, triangle, 1e-8)).toBe(false);
+        assert.strictEqual(PackingUtils.isCircleInConvexHull(circle, triangle, 1e-8), false);
     });
 });
 
@@ -137,7 +139,7 @@ const {
 describe('calculateGridTotal', () => {
     test('calculates correct total for simple grid', () => {
         // 10x10 area, 2 diameter, 0 gap -> 5x5 = 25
-        expect(calculateGridTotal(10, 10, 2, 0)).toBe(25);
+        assert.strictEqual(calculateGridTotal(10, 10, 2, 0), 25);
     });
 
     test('calculates correct total with gap', () => {
@@ -145,42 +147,42 @@ describe('calculateGridTotal', () => {
         // nx = floor( (10 - 2) / 3 ) + 1 = floor(8/3) + 1 = 2 + 1 = 3
         // ny = floor( (10 - 2) / 3 ) + 1 = 3
         // 3 * 3 = 9
-        expect(calculateGridTotal(10, 10, 2, 1)).toBe(9);
+        assert.strictEqual(calculateGridTotal(10, 10, 2, 1), 9);
     });
 
     test('returns 0 if diameter is larger than area', () => {
-        expect(calculateGridTotal(10, 10, 15, 0)).toBe(0);
+        assert.strictEqual(calculateGridTotal(10, 10, 15, 0), 0);
     });
 });
 
 describe('calculateLayout', () => {
     test('calculates basic hexagonal layout', () => {
         const layout = calculateLayout(10, 10, 2, 0);
-        expect(layout.total).toBeGreaterThan(0);
-        expect(layout.numRows).toBeGreaterThan(0);
-        expect(layout.dy).toBeCloseTo(2 * Math.sqrt(3) / 2);
+        assert.ok(layout.total > 0);
+        assert.ok(layout.numRows > 0);
+        assert.ok(Math.abs(layout.dy - 2 * Math.sqrt(3) / 2) < 0.0001);
     });
 
     test('returns 0 total for too large diameter', () => {
         const layout = calculateLayout(10, 10, 15, 0);
-        expect(layout.total).toBe(0);
-        expect(layout.numRows).toBe(0);
+        assert.strictEqual(layout.total, 0);
+        assert.strictEqual(layout.numRows, 0);
     });
 });
 
 describe('getCirclePositions', () => {
     test('returns empty array if no layout', () => {
-        expect(getCirclePositions(null, 10, 10, 2, 0, 0, false)).toEqual([]);
+        assert.deepStrictEqual(getCirclePositions(null, 10, 10, 2, 0, 0, false), []);
     });
 
     test('returns positions for a valid layout', () => {
         const layout = calculateLayout(10, 10, 2, 0);
         const positions = getCirclePositions(layout, 10, 10, 2, 0, 0, false);
-        expect(positions.length).toBe(layout.total);
-        expect(positions[0]).toHaveProperty('x');
-        expect(positions[0]).toHaveProperty('y');
-        expect(positions[0]).toHaveProperty('r');
-        expect(positions[0].r).toBe(1);
+        assert.strictEqual(positions.length, layout.total);
+        assert.ok('x' in positions[0]);
+        assert.ok('y' in positions[0]);
+        assert.ok('r' in positions[0]);
+        assert.strictEqual(positions[0].r, 1);
     });
 
     test('applies rotation correctly', () => {
@@ -188,11 +190,11 @@ describe('getCirclePositions', () => {
         const positionsNormal = getCirclePositions(layout, 20, 10, 2, 0, 0, false);
         const positionsRotated = getCirclePositions(layout, 10, 20, 2, 0, 0, true);
 
-        expect(positionsNormal.length).toBe(positionsRotated.length);
+        assert.strictEqual(positionsNormal.length, positionsRotated.length);
         // Because of the math, they might not map 1:1 perfectly easily,
         // but checking length and properties is a good sanity check
-        expect(positionsRotated[0]).toHaveProperty('x');
-        expect(positionsRotated[0]).toHaveProperty('y');
+        assert.ok('x' in positionsRotated[0]);
+        assert.ok('y' in positionsRotated[0]);
     });
 });
 
@@ -200,13 +202,13 @@ describe('checkOverlap', () => {
     test('detects overlap between intersecting circles', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 8, y: 0, r: 5 };
-        expect(checkOverlap(c1, c2)).toBe(true);
+        assert.strictEqual(checkOverlap(c1, c2), true);
     });
 
     test('detects no overlap between separated circles', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 12, y: 0, r: 5 };
-        expect(checkOverlap(c1, c2)).toBe(false);
+        assert.strictEqual(checkOverlap(c1, c2), false);
     });
 
     test('detects overlap with gap parameter', () => {
@@ -214,22 +216,22 @@ describe('checkOverlap', () => {
         const c2 = { x: 11, y: 0, r: 5 };
         // distance is 11. radii sum is 10. Gap is 2.
         // Min distance required is 12. So they "overlap" with respect to the gap.
-        expect(checkOverlap(c1, c2, 2)).toBe(true);
+        assert.strictEqual(checkOverlap(c1, c2, 2), true);
     });
 
     test('detects overlap with varying radii and kerf gap', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 10, y: 0, r: 2 }; // distance is 10
         // radii sum is 7. Gap is 4. Min dist is 11. Overlaps!
-        expect(checkOverlap(c1, c2, 4)).toBe(true);
+        assert.strictEqual(checkOverlap(c1, c2, 4), true);
         // radii sum is 7. Gap is 2. Min dist is 9. Does not overlap!
-        expect(checkOverlap(c1, c2, 2)).toBe(false);
+        assert.strictEqual(checkOverlap(c1, c2, 2), false);
     });
 
     test('edge case: barely touching', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 10, y: 0, r: 5 };
-        expect(checkOverlap(c1, c2)).toBe(false);
+        assert.strictEqual(checkOverlap(c1, c2), false);
     });
 
     test('interstitial fill logic: fits small circle perfectly in void between tangent larger circles', () => {
@@ -247,15 +249,15 @@ describe('checkOverlap', () => {
         const maxR = R * (2 * Math.sqrt(3) / 3 - 1);
 
         const validFiller = { x: centroidX, y: centroidY, r: maxR };
-        expect(checkOverlap(validFiller, c1, 0)).toBe(false);
-        expect(checkOverlap(validFiller, c2, 0)).toBe(false);
-        expect(checkOverlap(validFiller, c3, 0)).toBe(false);
+        assert.strictEqual(checkOverlap(validFiller, c1, 0), false);
+        assert.strictEqual(checkOverlap(validFiller, c2, 0), false);
+        assert.strictEqual(checkOverlap(validFiller, c3, 0), false);
 
         // A slightly larger circle should overlap
         const invalidFiller = { x: centroidX, y: centroidY, r: maxR + 0.1 };
-        expect(checkOverlap(invalidFiller, c1, 0)).toBe(true);
-        expect(checkOverlap(invalidFiller, c2, 0)).toBe(true);
-        expect(checkOverlap(invalidFiller, c3, 0)).toBe(true);
+        assert.strictEqual(checkOverlap(invalidFiller, c1, 0), true);
+        assert.strictEqual(checkOverlap(invalidFiller, c2, 0), true);
+        assert.strictEqual(checkOverlap(invalidFiller, c3, 0), true);
     });
 });
 
@@ -263,34 +265,34 @@ describe('clampToRectangularBoundary', () => {
     test('returns same circle if inside boundary', () => {
         const circle = { x: 5, y: 5, r: 2 };
         const clamped = clampToRectangularBoundary(circle, 10, 10);
-        expect(clamped).toEqual(circle);
+        assert.deepStrictEqual(clamped, circle);
     });
 
     test('clamps x coordinate when out of bounds', () => {
         const circle = { x: 1, y: 5, r: 2 };
         const clamped = clampToRectangularBoundary(circle, 10, 10);
-        expect(clamped.x).toBe(2);
-        expect(clamped.y).toBe(5);
+        assert.strictEqual(clamped.x, 2);
+        assert.strictEqual(clamped.y, 5);
     });
 
     test('clamps y coordinate when out of bounds', () => {
         const circle = { x: 5, y: 9, r: 2 };
         const clamped = clampToRectangularBoundary(circle, 10, 10);
-        expect(clamped.x).toBe(5);
-        expect(clamped.y).toBe(8);
+        assert.strictEqual(clamped.x, 5);
+        assert.strictEqual(clamped.y, 8);
     });
 
     test('applies margin correctly', () => {
         const circle = { x: 2, y: 5, r: 2 };
         const clamped = clampToRectangularBoundary(circle, 10, 10, 1);
         // minX should be margin + r = 1 + 2 = 3
-        expect(clamped.x).toBe(3);
+        assert.strictEqual(clamped.x, 3);
     });
 
     test('returns null if circle is too large for boundary', () => {
         const circle = { x: 5, y: 5, r: 6 };
         const clamped = clampToRectangularBoundary(circle, 10, 10);
-        expect(clamped).toBeNull();
+        assert.strictEqual(clamped, null);
     });
 });
 
@@ -298,29 +300,29 @@ describe('clampToCircularBoundary', () => {
     test('returns same circle if inside boundary', () => {
         const circle = { x: 0, y: 0, r: 2 };
         const clamped = clampToCircularBoundary(circle, 0, 0, 10);
-        expect(clamped).toEqual(circle);
+        assert.deepStrictEqual(clamped, circle);
     });
 
     test('clamps circle to edge of boundary', () => {
         const circle = { x: 8, y: 0, r: 3 };
         const clamped = clampToCircularBoundary(circle, 0, 0, 10);
         // maxDist = 10 - 3 = 7. Current dist is 8.
-        expect(clamped.x).toBe(7);
-        expect(clamped.y).toBe(0);
+        assert.strictEqual(clamped.x, 7);
+        assert.strictEqual(clamped.y, 0);
     });
 
     test('applies margin correctly', () => {
         const circle = { x: 6, y: 0, r: 3 };
         const clamped = clampToCircularBoundary(circle, 0, 0, 10, 2);
         // maxDist = 10 - 2(margin) - 3(r) = 5. Current dist is 6.
-        expect(clamped.x).toBe(5);
-        expect(clamped.y).toBe(0);
+        assert.strictEqual(clamped.x, 5);
+        assert.strictEqual(clamped.y, 0);
     });
 
     test('returns null if circle is too large for boundary', () => {
         const circle = { x: 0, y: 0, r: 12 };
         const clamped = clampToCircularBoundary(circle, 0, 0, 10);
-        expect(clamped).toBeNull();
+        assert.strictEqual(clamped, null);
     });
 });
 
@@ -332,16 +334,16 @@ describe('calculateDensity', () => {
         ];
         const containerArea = 10;
         const expectedDensity = (Math.PI * 1 * 1 * 2) / 10;
-        expect(calculateDensity(circles, containerArea)).toBeCloseTo(expectedDensity);
+        assert.ok(Math.abs(calculateDensity(circles, containerArea) - expectedDensity) < 0.0001);
     });
 
     test('returns 0 for empty circles array', () => {
-        expect(calculateDensity([], 10)).toBe(0);
+        assert.strictEqual(calculateDensity([], 10), 0);
     });
 
     test('returns 0 for containerArea <= 0', () => {
-        expect(calculateDensity([{ x: 0, y: 0, r: 1 }], 0)).toBe(0);
-        expect(calculateDensity([{ x: 0, y: 0, r: 1 }], -5)).toBe(0);
+        assert.strictEqual(calculateDensity([{ x: 0, y: 0, r: 1 }], 0), 0);
+        assert.strictEqual(calculateDensity([{ x: 0, y: 0, r: 1 }], -5), 0);
     });
 });
 
@@ -356,19 +358,19 @@ describe('distanceToPolygonEdge', () => {
     test('calculates correct distance from circle to nearest polygon edge', () => {
         const circle = { x: 5, y: 5, r: 1 };
         // distance from (5,5) to edges (0, y), (10, y), (x, 0), (x, 10) is 5
-        expect(distanceToPolygonEdge(circle, squarePolygon)).toBeCloseTo(5);
+        assert.ok(Math.abs(distanceToPolygonEdge(circle, squarePolygon) - 5) < 0.0001);
     });
 
     test('calculates correct distance when circle is near corner', () => {
         const circle = { x: 1, y: 2, r: 1 };
         // closest to left edge (x=0) which is dist 1
-        expect(distanceToPolygonEdge(circle, squarePolygon)).toBeCloseTo(1);
+        assert.ok(Math.abs(distanceToPolygonEdge(circle, squarePolygon) - 1) < 0.0001);
     });
 
     test('calculates distance accurately for points outside the polygon', () => {
         const circle = { x: 15, y: 5, r: 1 };
         // distance to edge (10, y) is 5
-        expect(distanceToPolygonEdge(circle, squarePolygon)).toBeCloseTo(5);
+        assert.ok(Math.abs(distanceToPolygonEdge(circle, squarePolygon) - 5) < 0.0001);
     });
 });
 
@@ -388,30 +390,30 @@ describe('isCircleInPolygon', () => {
 
     test('returns true when circle is completely inside', () => {
         const circle = { x: 5, y: 5, r: 2 };
-        expect(isCircleInPolygon(circle, squarePolygon)).toBe(true);
+        assert.strictEqual(isCircleInPolygon(circle, squarePolygon), true);
     });
 
     test('returns false when circle is outside', () => {
         const circle = { x: 15, y: 15, r: 2 };
-        expect(isCircleInPolygon(circle, squarePolygon)).toBe(false);
+        assert.strictEqual(isCircleInPolygon(circle, squarePolygon), false);
     });
 
     test('returns false when circle intersects an edge', () => {
         const circle = { x: 1, y: 5, r: 2 };
         // distance to left edge is 1, radius is 2, so it intersects
-        expect(isCircleInPolygon(circle, squarePolygon)).toBe(false);
+        assert.strictEqual(isCircleInPolygon(circle, squarePolygon), false);
     });
 
     test('returns true for circle tangent to bounding edge without registering false-positive collision', () => {
         const circle = { x: 2, y: 5, r: 2 };
         // distance to left edge is exactly 2, radius is 2. Should be true.
-        expect(isCircleInPolygon(circle, squarePolygon)).toBe(true);
+        assert.strictEqual(isCircleInPolygon(circle, squarePolygon), true);
     });
 
     test('returns true for floating point tangent inaccuracies', () => {
         // slightly less than 2 due to floating point error, e.g. 1.999999
         const circle = { x: 1.999995, y: 5, r: 2 };
-        expect(isCircleInPolygon(circle, squarePolygon)).toBe(true);
+        assert.strictEqual(isCircleInPolygon(circle, squarePolygon), true);
     });
 });
 
@@ -422,16 +424,16 @@ describe('calculateTotalArea', () => {
             { x: 5, y: 5, r: 3 }
         ];
         const expected = Math.PI * (4 + 9);
-        expect(calculateTotalArea(circles)).toBeCloseTo(expected);
+        assert.ok(Math.abs(calculateTotalArea(circles) - expected) < 0.0001);
     });
 
     test('returns 0 for empty array', () => {
-        expect(calculateTotalArea([])).toBe(0);
+        assert.strictEqual(calculateTotalArea([]), 0);
     });
 
     test('returns 0 for null/undefined input', () => {
-        expect(calculateTotalArea(null)).toBe(0);
-        expect(calculateTotalArea(undefined)).toBe(0);
+        assert.strictEqual(calculateTotalArea(null), 0);
+        assert.strictEqual(calculateTotalArea(undefined), 0);
     });
 });
 
@@ -443,24 +445,24 @@ describe('calculateVoidArea', () => {
         ];
         const containerArea = 20;
         const expected = 20 - (2 * Math.PI);
-        expect(calculateVoidArea(circles, containerArea)).toBeCloseTo(expected);
+        assert.ok(Math.abs(calculateVoidArea(circles, containerArea) - expected) < 0.0001);
     });
 
     test('returns 0 if container area is 0 or negative', () => {
         const circles = [{ x: 0, y: 0, r: 1 }];
-        expect(calculateVoidArea(circles, 0)).toBe(0);
-        expect(calculateVoidArea(circles, -10)).toBe(0);
+        assert.strictEqual(calculateVoidArea(circles, 0), 0);
+        assert.strictEqual(calculateVoidArea(circles, -10), 0);
     });
 
     test('returns container area if no circles are provided', () => {
-        expect(calculateVoidArea([], 50)).toBe(50);
-        expect(calculateVoidArea(null, 50)).toBe(50);
+        assert.strictEqual(calculateVoidArea([], 50), 50);
+        assert.strictEqual(calculateVoidArea(null, 50), 50);
     });
 
     test('does not return negative area if circle area exceeds container area', () => {
         const circles = [{ x: 0, y: 0, r: 10 }]; // Area is ~314
         const containerArea = 100;
-        expect(calculateVoidArea(circles, containerArea)).toBe(0);
+        assert.strictEqual(calculateVoidArea(circles, containerArea), 0);
     });
 });
 
@@ -473,26 +475,26 @@ describe('calculateScrapPercentage', () => {
         const containerArea = 20;
         const totalCircleArea = 2 * Math.PI;
         const expected = ((20 - totalCircleArea) / 20) * 100;
-        expect(calculateScrapPercentage(circles, containerArea)).toBeCloseTo(expected);
+        assert.ok(Math.abs(calculateScrapPercentage(circles, containerArea) - expected) < 0.0001);
     });
 
     test('returns 100% if no circles are provided', () => {
-        expect(calculateScrapPercentage([], 50)).toBe(100);
-        expect(calculateScrapPercentage(null, 50)).toBe(100);
+        assert.strictEqual(calculateScrapPercentage([], 50), 100);
+        assert.strictEqual(calculateScrapPercentage(null, 50), 100);
     });
 
     test('returns 0 if container area is invalid', () => {
         const circles = [{ x: 0, y: 0, r: 1 }];
-        expect(calculateScrapPercentage(circles, 0)).toBe(0);
-        expect(calculateScrapPercentage(circles, -10)).toBe(0);
+        assert.strictEqual(calculateScrapPercentage(circles, 0), 0);
+        assert.strictEqual(calculateScrapPercentage(circles, -10), 0);
     });
 });
 
 describe('calculateConvexHull', () => {
     test('returns empty array for invalid points or too few points', () => {
-        expect(calculateConvexHull([])).toEqual([]);
-        expect(calculateConvexHull([{ x: 0, y: 0 }])).toEqual([{ x: 0, y: 0 }]);
-        expect(calculateConvexHull(null)).toBeNull();
+        assert.deepStrictEqual(calculateConvexHull([]), []);
+        assert.deepStrictEqual(calculateConvexHull([{ x: 0, y: 0 }]), [{ x: 0, y: 0 }]);
+        assert.strictEqual(calculateConvexHull(null), null);
     });
 
     test('calculates correct convex hull for a simple set of points', () => {
@@ -504,13 +506,13 @@ describe('calculateConvexHull', () => {
             { x: 1, y: 1 } // Inside point
         ];
         const hull = calculateConvexHull(points);
-        expect(hull).toHaveLength(4);
+        assert.strictEqual(hull.length, 4);
         // Order might vary depending on starting point, but should contain the 4 corners
         const hullSet = new Set(hull.map(p => `${p.x},${p.y}`));
-        expect(hullSet.has('0,0')).toBeTruthy();
-        expect(hullSet.has('2,0')).toBeTruthy();
-        expect(hullSet.has('2,2')).toBeTruthy();
-        expect(hullSet.has('0,2')).toBeTruthy();
+        assert.ok(hullSet.has('0,0'));
+        assert.ok(hullSet.has('2,0'));
+        assert.ok(hullSet.has('2,2'));
+        assert.ok(hullSet.has('0,2'));
     });
 
     test('calculates correct convex hull for a line of points', () => {
@@ -522,16 +524,16 @@ describe('calculateConvexHull', () => {
         const hull = calculateConvexHull(points);
         // Should ideally return just the two endpoints, or all three if collinearity isn't strict
         // In our Monotone Chain, it returns endpoints.
-        expect(hull).toHaveLength(2);
-        expect(hull).toEqual(expect.arrayContaining([{x: 0, y: 0}, {x: 2, y: 2}]));
+        assert.strictEqual(hull.length, 2);
+        assert.deepStrictEqual(hull, [{x: 0, y: 0}, {x: 2, y: 2}]);
     });
 });
 
 describe('calculatePolygonPerimeter', () => {
     test('returns 0 for invalid polygons', () => {
-        expect(calculatePolygonPerimeter([])).toBe(0);
-        expect(calculatePolygonPerimeter([{ x: 0, y: 0 }])).toBe(0);
-        expect(calculatePolygonPerimeter(null)).toBe(0);
+        assert.strictEqual(calculatePolygonPerimeter([]), 0);
+        assert.strictEqual(calculatePolygonPerimeter([{ x: 0, y: 0 }]), 0);
+        assert.strictEqual(calculatePolygonPerimeter(null), 0);
     });
 
     test('calculates correct perimeter for a square', () => {
@@ -541,7 +543,7 @@ describe('calculatePolygonPerimeter', () => {
             { x: 2, y: 2 },
             { x: 0, y: 2 }
         ];
-        expect(calculatePolygonPerimeter(polygon)).toBe(8);
+        assert.strictEqual(calculatePolygonPerimeter(polygon), 8);
     });
 
     test('calculates correct perimeter for a triangle', () => {
@@ -551,7 +553,7 @@ describe('calculatePolygonPerimeter', () => {
             { x: 0, y: 4 }
         ];
         // 3 + 4 + 5 = 12
-        expect(calculatePolygonPerimeter(polygon)).toBe(12);
+        assert.strictEqual(calculatePolygonPerimeter(polygon), 12);
     });
 });
 
@@ -564,16 +566,16 @@ describe('non-axis-aligned bounding polygon containment', () => {
     ];
 
     test('circle entirely inside rotated diamond', () => {
-        expect(isCircleInPolygon({ x: 5, y: 5, r: 2 }, polygon)).toBe(true);
+        assert.strictEqual(isCircleInPolygon({ x: 5, y: 5, r: 2 }, polygon), true);
     });
 
     test('circle entirely outside rotated diamond', () => {
-        expect(isCircleInPolygon({ x: 10, y: 10, r: 1 }, polygon)).toBe(false);
+        assert.strictEqual(isCircleInPolygon({ x: 10, y: 10, r: 1 }, polygon), false);
     });
 
     test('circle intersecting edge of rotated diamond', () => {
-        expect(isCircleInPolygon({ x: 7.5, y: 7.5, r: 2 }, polygon)).toBe(false); // Center on edge
-        expect(isCircleInPolygon({ x: 7, y: 7, r: 2 }, polygon)).toBe(false); // Center inside, intersecting edge
+        assert.strictEqual(isCircleInPolygon({ x: 7.5, y: 7.5, r: 2 }, polygon), false); // Center on edge
+        assert.strictEqual(isCircleInPolygon({ x: 7, y: 7, r: 2 }, polygon), false); // Center inside, intersecting edge
     });
 
     test('circle tangent to edge of rotated diamond', () => {
@@ -582,6 +584,72 @@ describe('non-axis-aligned bounding polygon containment', () => {
         // Distance from (5,5) to line x + y - 15 = 0 is |5 + 5 - 15| / sqrt(2) = 5 / sqrt(2) = ~3.5355
         // A circle at (5,5) with radius 3.5355 should be roughly tangent
         const r = 5 / Math.sqrt(2);
-        expect(isCircleInPolygon({ x: 5, y: 5, r: r }, polygon)).toBe(true);
+        assert.strictEqual(isCircleInPolygon({ x: 5, y: 5, r: r }, polygon), true);
+    });
+});
+
+describe('Density Comparison: Hexagonal vs Rectangular Grid', () => {
+    test('hexagonal layout yields more circles than grid for large enough area', () => {
+        // e.g. 100x100 area, diameter 10, no gap
+        const gridYield = calculateGridTotal(100, 100, 10, 0); // 10 * 10 = 100
+        const hexLayout = calculateLayout(100, 100, 10, 0);
+        // hex layout dy = 10 * sqrt(3)/2 = 8.66
+        // numRows = floor((100-10)/8.66) + 1 = 11
+        // rows will alternate 10 and 9 circles. (6 * 10) + (5 * 9) = 60 + 45 = 105
+        assert.ok(hexLayout.total > gridYield);
+    });
+});
+
+describe('Spacing Calculations (Gap Effect)', () => {
+    test('larger gap reduces total yield in grid layout', () => {
+        const yieldNoGap = calculateGridTotal(100, 100, 10, 0); // 100
+        const yieldWithGap = calculateGridTotal(100, 100, 10, 5); // effective D = 15. floor(90/15)+1 = 7. 7x7=49
+        assert.ok(yieldNoGap > yieldWithGap);
+        assert.strictEqual(yieldWithGap, 49);
+    });
+
+    test('larger gap reduces total yield in hexagonal layout', () => {
+        const layoutNoGap = calculateLayout(100, 100, 10, 0);
+        const layoutWithGap = calculateLayout(100, 100, 10, 5);
+        assert.ok(layoutNoGap.total > layoutWithGap.total);
+    });
+});
+
+describe('Edge Margins (Margin Effect on Positions)', () => {
+    test('margin shifts starting positions of circles', () => {
+        const layout = calculateLayout(100, 100, 10, 0);
+        // without margin
+        const positionsNoMargin = getCirclePositions(layout, 100, 100, 10, 0, 0, false);
+        // with margin
+        const positionsWithMargin = getCirclePositions(layout, 120, 120, 10, 10, 0, false);
+
+        assert.ok(positionsNoMargin.length > 0);
+        assert.ok(positionsWithMargin.length > 0);
+        // The relative start position is shifted by margin. Since the inner packing area is 100x100 for both,
+        // the layout and positions relative to top-left of packing area are identical.
+        // Thus, positionsWithMargin should exactly be shifted by +10 in both x and y.
+        assert.ok(Math.abs(positionsWithMargin[0].x - (positionsNoMargin[0].x + 10)) < 0.0001);
+        assert.ok(Math.abs(positionsWithMargin[0].y - (positionsNoMargin[0].y + 10)) < 0.0001);
+    });
+});
+
+describe('Yield Calculation and Waste Area Edge Cases', () => {
+    test('calculateVoidArea handles zero and negative radii correctly', () => {
+        // Zero radius
+        const circlesZeroR = [{ x: 0, y: 0, r: 0 }];
+        assert.strictEqual(calculateVoidArea(circlesZeroR, 100), 100);
+
+        // Negative radius
+        const circlesNegR = [{ x: 0, y: 0, r: -5 }];
+        // r squared will still be positive (25), so area is 25pi
+        // This is a math property, but tests that it doesn't fail or return invalid area
+        const expectedNegR = 100 - (Math.PI * 25);
+        assert.ok(Math.abs(calculateVoidArea(circlesNegR, 100) - expectedNegR) < 0.0001);
+    });
+
+    test('calculateScrapPercentage handles zero container area without dividing by zero', () => {
+        const circles = [{ x: 0, y: 0, r: 5 }];
+        assert.strictEqual(calculateScrapPercentage(circles, 0), 0);
+        assert.strictEqual(calculateScrapPercentage(circles, -10), 0);
     });
 });
