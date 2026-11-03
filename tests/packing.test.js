@@ -379,6 +379,46 @@ describe('Performance / Benchmark', () => {
             Math.sqrt = originalSqrt;
         }
     });
+
+    test('clampToCircularBoundary uses 0 Math.sqrt calls for circles within boundary', () => {
+        const originalSqrt = Math.sqrt;
+        let sqrtCalls = 0;
+
+        Math.sqrt = (x) => {
+            sqrtCalls++;
+            return originalSqrt(x);
+        };
+
+        const circle = { x: 0, y: 0, r: 2 };
+        try {
+            const result = PackingUtils.clampToCircularBoundary(circle, 0, 0, 10);
+            assert.deepStrictEqual(result, circle);
+            assert.strictEqual(sqrtCalls, 0, `Expected 0 Math.sqrt calls, but got ${sqrtCalls}`);
+        } finally {
+            Math.sqrt = originalSqrt;
+        }
+    });
+
+    test('clampToCircularBoundary uses 1 Math.sqrt call when clamping is needed', () => {
+        const originalSqrt = Math.sqrt;
+        let sqrtCalls = 0;
+
+        Math.sqrt = (x) => {
+            sqrtCalls++;
+            return originalSqrt(x);
+        };
+
+        const circle = { x: 8, y: 0, r: 3 };
+        try {
+            const result = PackingUtils.clampToCircularBoundary(circle, 0, 0, 10);
+            assert.ok(result);
+            assert.strictEqual(result.x, 7);
+            assert.strictEqual(result.y, 0);
+            assert.strictEqual(sqrtCalls, 1, `Expected 1 Math.sqrt call, but got ${sqrtCalls}`);
+        } finally {
+            Math.sqrt = originalSqrt;
+        }
+    });
 });
 
 describe('distanceToPolygonEdge', () => {
