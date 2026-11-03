@@ -360,6 +360,36 @@ describe('calculateDensity', () => {
 });
 
 describe('Performance / Benchmark', () => {
+    test('avoids Math.sqrt and Math.hypot during inner loop circle collision tests', () => {
+        const originalSqrt = Math.sqrt;
+        const originalHypot = Math.hypot;
+        let sqrtCalls = 0;
+        let hypotCalls = 0;
+
+        Math.sqrt = (x) => {
+            sqrtCalls++;
+            return originalSqrt(x);
+        };
+        Math.hypot = (...args) => {
+            hypotCalls++;
+            return originalHypot(...args);
+        };
+
+        const c1 = { x: 0, y: 0, r: 5 };
+        const c2 = { x: 8, y: 0, r: 5 };
+
+        try {
+            PackingUtils.checkCircleCollision(c1, c2);
+            PackingUtils.checkOverlap(c1, c2);
+
+            assert.strictEqual(sqrtCalls, 0, `Expected 0 Math.sqrt calls, but got ${sqrtCalls}`);
+            assert.strictEqual(hypotCalls, 0, `Expected 0 Math.hypot calls, but got ${hypotCalls}`);
+        } finally {
+            Math.sqrt = originalSqrt;
+            Math.hypot = originalHypot;
+        }
+    });
+
     test('avoids Math.sqrt during inner loop collision tests', () => {
         const originalSqrt = Math.sqrt;
         let sqrtCalls = 0;
