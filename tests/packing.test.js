@@ -347,6 +347,40 @@ describe('calculateDensity', () => {
     });
 });
 
+describe('Performance / Benchmark', () => {
+    test('avoids Math.sqrt during inner loop collision tests', () => {
+        const originalSqrt = Math.sqrt;
+        let sqrtCalls = 0;
+
+        Math.sqrt = (x) => {
+            sqrtCalls++;
+            return originalSqrt(x);
+        };
+
+        const squarePolygon = [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+            { x: 10, y: 10 },
+            { x: 0, y: 10 }
+        ];
+
+        const circle = { x: 5, y: 5, r: 2 };
+
+        try {
+            const inConvex = PackingUtils.isCircleInConvexHull(circle, squarePolygon);
+            const inPolygon = PackingUtils.isCircleInPolygon(circle, squarePolygon);
+
+            assert.strictEqual(inConvex, true);
+            assert.strictEqual(inPolygon, true);
+
+            // Neither of these internal routines should have called Math.sqrt
+            assert.strictEqual(sqrtCalls, 0, `Expected 0 Math.sqrt calls, but got ${sqrtCalls}`);
+        } finally {
+            Math.sqrt = originalSqrt;
+        }
+    });
+});
+
 describe('distanceToPolygonEdge', () => {
     const squarePolygon = [
         { x: 0, y: 0 },
