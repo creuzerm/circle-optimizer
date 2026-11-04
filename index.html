@@ -171,9 +171,7 @@
                     for (const filler of fillerCandidates) {
                         let collision = false;
                         for (const large of largeCircles) {
-                            // Temporary filler with increased radius to account for gap
-                            const testFiller = { ...filler, r: filler.r + gapRadius };
-                            if (window.PackingUtils.checkCircleCollision(testFiller, large, 0.0001)) {
+                            if (window.PackingUtils.checkOverlap(filler, large, gapRadius)) {
                                 collision = true;
                                 break;
                             }
