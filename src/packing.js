@@ -71,12 +71,12 @@
 
   const checkCircleCollision = (c1, c2, epsilon = 0.0001) => {
       const dx = c2.x - c1.x;
-      const dy = c2.y - c1.y;
-      const distSq = dx * dx + dy * dy;
       const minDist = c1.r + c2.r;
-      const minDistSq = minDist * minDist;
-      // To strictly follow dx*dx + dy*dy <= (r1+r2)*(r1+r2) and pass existing tests expecting epsilon subtraction from squared distance
-      return distSq < minDistSq - epsilon;
+      if (Math.abs(dx) >= minDist) return false;
+      const dy = c2.y - c1.y;
+      if (Math.abs(dy) >= minDist) return false;
+      // To strictly follow dx*dx + dy*dy <= (r1+r2)*(r1+r2) and avoid redundant Math.sqrt/Math.hypot calls
+      return (dx * dx + dy * dy) < (minDist * minDist) - epsilon;
   };
 
   const isCircleInConvexHull = (circle, polygon, epsilon = 0.0001) => {
@@ -113,10 +113,12 @@
   // Additional Geometry functions
   const checkOverlap = (c1, c2, gap = 0) => {
       const dx = c1.x - c2.x;
-      const dy = c1.y - c2.y;
-      const distSq = dx * dx + dy * dy;
       const minDist = c1.r + c2.r + gap;
-      return distSq < minDist * minDist - 0.0001;
+      if (Math.abs(dx) >= minDist) return false;
+      const dy = c1.y - c2.y;
+      if (Math.abs(dy) >= minDist) return false;
+      // Use squared distance comparison to avoid redundant Math.sqrt/Math.hypot in inner loops
+      return (dx * dx + dy * dy) < (minDist * minDist) - 0.0001;
   };
 
   const clampToRectangularBoundary = (circle, width, height, margin = 0) => {

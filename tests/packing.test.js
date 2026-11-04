@@ -390,6 +390,43 @@ describe('Performance / Benchmark', () => {
         }
     });
 
+    test('bounding box early exit check (checkOverlap) is significantly faster than squared distance logic for separated circles', () => {
+        const c1 = { x: 0, y: 0, r: 5 };
+        const c2 = { x: 50, y: 50, r: 5 }; // Circles far apart to trigger early exit
+        const iterations = 1000000;
+
+        const checkOverlapOld = (circle1, circle2, gap = 0) => {
+            const dx = circle1.x - circle2.x;
+            const dy = circle1.y - circle2.y;
+            const distSq = dx * dx + dy * dy;
+            const minDist = circle1.r + circle2.r + gap;
+            return distSq < minDist * minDist - 0.0001;
+        };
+
+        // Warm up
+        for (let i = 0; i < 10000; i++) {
+            checkOverlapOld(c1, c2);
+            PackingUtils.checkOverlap(c1, c2);
+        }
+
+        const startOld = performance.now();
+        for (let i = 0; i < iterations; i++) {
+            checkOverlapOld(c1, c2);
+        }
+        const endOld = performance.now();
+        const oldTime = endOld - startOld;
+
+        const startNew = performance.now();
+        for (let i = 0; i < iterations; i++) {
+            PackingUtils.checkOverlap(c1, c2);
+        }
+        const endNew = performance.now();
+        const newTime = endNew - startNew;
+
+        // Bounding box early exit should be faster
+        assert.ok(newTime < oldTime, `New logic with bounding box (${newTime.toFixed(2)}ms) should be faster than old squared logic (${oldTime.toFixed(2)}ms)`);
+    });
+
     test('squared distance check (checkOverlap) is significantly faster than Math.hypot logic', () => {
         const c1 = { x: 0, y: 0, r: 5 };
         const c2 = { x: 8, y: 0, r: 5 };
