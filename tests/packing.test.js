@@ -469,6 +469,44 @@ describe('Performance / Benchmark', () => {
         assert.ok(optimizedTime < unoptimizedTime * 0.95, `Optimized logic (${optimizedTime.toFixed(2)}ms) should be faster than unoptimized logic (${unoptimizedTime.toFixed(2)}ms)`);
     });
 
+    test('checkCircleCollision is significantly faster than Math.hypot logic', () => {
+        const c1 = { x: 0, y: 0, r: 5 };
+        const c2 = { x: 8, y: 0, r: 5 };
+        const iterations = 1000000;
+
+        for (let i = 0; i < 10000; i++) {
+            PackingUtils.checkCircleCollision(c1, c2);
+        }
+
+        const startOptimized = performance.now();
+        for (let i = 0; i < iterations; i++) {
+            PackingUtils.checkCircleCollision(c1, c2);
+        }
+        const endOptimized = performance.now();
+        const optimizedTime = endOptimized - startOptimized;
+
+        const unoptimizedCheck = (circle1, circle2, epsilon = 0.0001) => {
+            const dx = circle2.x - circle1.x;
+            const dy = circle2.y - circle1.y;
+            const dist = Math.hypot(dx, dy);
+            const minDist = circle1.r + circle2.r;
+            return dist < minDist - (epsilon / (2 * minDist));
+        };
+
+        for (let i = 0; i < 10000; i++) {
+            unoptimizedCheck(c1, c2);
+        }
+
+        const startUnoptimized = performance.now();
+        for (let i = 0; i < iterations; i++) {
+            unoptimizedCheck(c1, c2);
+        }
+        const endUnoptimized = performance.now();
+        const unoptimizedTime = endUnoptimized - startUnoptimized;
+
+        assert.ok(optimizedTime < unoptimizedTime * 0.95, `Optimized logic (${optimizedTime.toFixed(2)}ms) should be faster than unoptimized logic (${unoptimizedTime.toFixed(2)}ms)`);
+    });
+
     test('avoids Math.sqrt during inner loop collision tests', () => {
         const originalSqrt = Math.sqrt;
         let sqrtCalls = 0;
