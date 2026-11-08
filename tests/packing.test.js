@@ -441,6 +441,8 @@ describe('Performance / Benchmark', () => {
 
         const startOptimized = performance.now();
         for (let i = 0; i < iterations; i++) {
+            c1.x += 0.00001;
+            c2.x -= 0.00001;
             PackingUtils.checkOverlap(c1, c2);
         }
         const endOptimized = performance.now();
@@ -462,6 +464,8 @@ describe('Performance / Benchmark', () => {
 
         const startUnoptimized = performance.now();
         for (let i = 0; i < iterations; i++) {
+            c1.x += 0.00001;
+            c2.x -= 0.00001;
             unoptimizedCheck(c1, c2);
         }
         const endUnoptimized = performance.now();
@@ -482,6 +486,8 @@ describe('Performance / Benchmark', () => {
 
         const startOptimized = performance.now();
         for (let i = 0; i < iterations; i++) {
+            c1.x += 0.00001;
+            c2.x -= 0.00001;
             PackingUtils.checkCircleCollision(c1, c2);
         }
         const endOptimized = performance.now();
@@ -501,6 +507,8 @@ describe('Performance / Benchmark', () => {
 
         const startUnoptimized = performance.now();
         for (let i = 0; i < iterations; i++) {
+            c1.x += 0.00001;
+            c2.x -= 0.00001;
             unoptimizedCheck(c1, c2);
         }
         const endUnoptimized = performance.now();
