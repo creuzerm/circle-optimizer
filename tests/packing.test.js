@@ -411,6 +411,7 @@ describe('Performance / Benchmark', () => {
 
         const startOld = performance.now();
         for (let i = 0; i < iterations; i++) {
+            c2.x = 50 + (i % 2); // Prevent V8 dead code elimination
             checkOverlapOld(c1, c2);
         }
         const endOld = performance.now();
@@ -418,6 +419,7 @@ describe('Performance / Benchmark', () => {
 
         const startNew = performance.now();
         for (let i = 0; i < iterations; i++) {
+            c2.x = 50 + (i % 2); // Prevent V8 dead code elimination
             PackingUtils.checkOverlap(c1, c2);
         }
         const endNew = performance.now();
