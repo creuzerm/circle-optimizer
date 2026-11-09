@@ -72,9 +72,9 @@
   const checkCircleCollision = (c1, c2, epsilon = 0.0001) => {
       const dx = c2.x - c1.x;
       const minDist = c1.r + c2.r;
-      if (Math.abs(dx) >= minDist) return false;
+      if (dx >= minDist || dx <= -minDist) return false;
       const dy = c2.y - c1.y;
-      if (Math.abs(dy) >= minDist) return false;
+      if (dy >= minDist || dy <= -minDist) return false;
       // To strictly follow dx*dx + dy*dy <= (r1+r2)*(r1+r2) and avoid redundant Math.sqrt/Math.hypot calls
       return (dx * dx + dy * dy) < (minDist * minDist) - epsilon;
   };
@@ -114,9 +114,9 @@
   const checkOverlap = (c1, c2, gap = 0) => {
       const dx = c1.x - c2.x;
       const minDist = c1.r + c2.r + gap;
-      if (Math.abs(dx) >= minDist) return false;
+      if (dx >= minDist || dx <= -minDist) return false;
       const dy = c1.y - c2.y;
-      if (Math.abs(dy) >= minDist) return false;
+      if (dy >= minDist || dy <= -minDist) return false;
       // Use squared distance comparison to avoid redundant Math.sqrt/Math.hypot in inner loops
       return (dx * dx + dy * dy) < (minDist * minDist) - 0.0001;
   };
