@@ -18,6 +18,16 @@
   }
 }(typeof window !== 'undefined' ? window : this, function () {
 
+  const dist2 = (v, w) => (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
+
+  const boundingBoxIntersect = (c1, c2, minDist) => {
+      const dx = c2.x - c1.x;
+      if (dx >= minDist || dx <= -minDist) return false;
+      const dy = c2.y - c1.y;
+      if (dy >= minDist || dy <= -minDist) return false;
+      return true;
+  };
+
   const calculateGridTotal = (w, h, d, gap) => {
       if (!Number.isFinite(w) || !Number.isFinite(h) || !Number.isFinite(d)) return 0;
       if (w <= 0 || h <= 0 || d <= 0) return 0;
@@ -80,13 +90,10 @@
   };
 
   const checkCircleCollision = (c1, c2, epsilon = 0.0001) => {
-      const dx = c2.x - c1.x;
       const minDist = c1.r + c2.r;
-      if (dx >= minDist || dx <= -minDist) return false;
-      const dy = c2.y - c1.y;
-      if (dy >= minDist || dy <= -minDist) return false;
+      if (!boundingBoxIntersect(c1, c2, minDist)) return false;
       // To strictly follow dx*dx + dy*dy <= (r1+r2)*(r1+r2) and avoid redundant Math.sqrt/Math.hypot calls
-      return (dx * dx + dy * dy) < (minDist * minDist) - epsilon;
+      return dist2(c1, c2) < (minDist * minDist) - epsilon;
   };
 
   const isCircleInConvexHull = (circle, polygon, epsilon = 0.0001) => {
@@ -122,13 +129,10 @@
 
   // Additional Geometry functions
   const checkOverlap = (c1, c2, gap = 0) => {
-      const dx = c1.x - c2.x;
       const minDist = c1.r + c2.r + gap;
-      if (dx >= minDist || dx <= -minDist) return false;
-      const dy = c1.y - c2.y;
-      if (dy >= minDist || dy <= -minDist) return false;
+      if (!boundingBoxIntersect(c1, c2, minDist)) return false;
       // Use squared distance comparison to avoid redundant Math.sqrt/Math.hypot in inner loops
-      return (dx * dx + dy * dy) < (minDist * minDist) - 0.0001;
+      return dist2(c1, c2) < (minDist * minDist) - 0.0001;
   };
 
   const fastFilterFillerCircles = (fillerCandidates, largeCircles, gap = 0) => {
@@ -178,12 +182,9 @@
               if (cell) {
                   for (let k = 0; k < cell.length; k++) {
                       const large = cell[k];
-                      const dx = filler.x - large.x;
-                      if (dx >= minDist || dx <= -minDist) continue;
-                      const dy = filler.y - large.y;
-                      if (dy >= minDist || dy <= -minDist) continue;
+                      if (!boundingBoxIntersect(filler, large, minDist)) continue;
 
-                      if ((dx * dx + dy * dy) < minDistSq) {
+                      if (dist2(filler, large) < minDistSq) {
                           collision = true;
                           break;
                       }
@@ -223,9 +224,10 @@
 
   const clampToCircularBoundary = (circle, containerX, containerY, containerR, margin = 0) => {
       const { x, y, r } = circle;
+      const containerPoint = { x: containerX, y: containerY };
       const dx = x - containerX;
       const dy = y - containerY;
-      const distSq = dx * dx + dy * dy;
+      const distSq = dist2(circle, containerPoint);
 
       const maxDist = containerR - margin - r;
 
@@ -251,8 +253,6 @@
       const totalCircleArea = circles.reduce((acc, c) => acc + (Math.PI * c.r * c.r), 0);
       return totalCircleArea / containerArea;
   };
-
-  const dist2 = (v, w) => (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
 
   const distToSegmentSquared = (p, v, w) => {
       const l2 = dist2(v, w);
@@ -354,9 +354,7 @@
       let perimeter = 0;
       for (let i = 0; i < polygon.length; i++) {
           const next = (i + 1) % polygon.length;
-          const dx = polygon[next].x - polygon[i].x;
-          const dy = polygon[next].y - polygon[i].y;
-          perimeter += Math.sqrt(dx * dx + dy * dy);
+          perimeter += Math.sqrt(dist2(polygon[i], polygon[next]));
       }
       return perimeter;
   };
@@ -413,6 +411,7 @@
     clampToCircularBoundary,
     calculateDensity,
     dist2,
+    boundingBoxIntersect,
     distToSegmentSquared,
     pointInPolygon,
     distanceToPolygonEdge,

@@ -1,4 +1,4 @@
-const { describe, test, it } = require('node:test');
+const { describe, test } = require('node:test');
 const assert = require('node:assert');
 const PackingUtils = require('../src/packing.js');
 
@@ -766,12 +766,6 @@ describe('distanceToPolygonEdge', () => {
 });
 
 describe('isCircleInPolygon', () => {
-    const trianglePolygon = [
-        { x: 0, y: 0 },
-        { x: 10, y: 0 },
-        { x: 0, y: 10 }
-    ];
-
     const squarePolygon = [
         { x: 0, y: 0 },
         { x: 10, y: 0 },
