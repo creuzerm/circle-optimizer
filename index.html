@@ -170,19 +170,8 @@
 
                     const gapRadius = gap;
 
-                    // Filter collisions
-                    for (const filler of fillerCandidates) {
-                        let collision = false;
-                        for (const large of largeCircles) {
-                            if (window.PackingUtils.checkOverlap(filler, large, gapRadius)) {
-                                collision = true;
-                                break;
-                            }
-                        }
-                        if (!collision) {
-                            fillerCircles.push(filler);
-                        }
-                    }
+                    // Filter collisions using fast spatial partitioning
+                    fillerCircles = window.PackingUtils.fastFilterFillerCircles(fillerCandidates, largeCircles, gapRadius);
                 }
 
                 setResults({
