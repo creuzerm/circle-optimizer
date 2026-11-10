@@ -992,4 +992,56 @@ describe('Geometry constraints', () => {
         assert.strictEqual(calculateLayout(10, 10, -5, 0).total, 0);
         assert.strictEqual(calculateGridTotal(10, 10, -5, 0), 0);
     });
+
+    test('geometry calculations handle NaN and Infinity', () => {
+        assert.strictEqual(calculateGridTotal(NaN, 10, 2, 0), 0);
+        assert.strictEqual(calculateGridTotal(10, Infinity, 2, 0), 0);
+        assert.strictEqual(calculateLayout(NaN, 10, 2, 0).total, 0);
+        assert.strictEqual(calculateLayout(10, Infinity, 2, 0).total, 0);
+    });
+});
+
+describe('generateSVGString', () => {
+    const { generateSVGString } = PackingUtils;
+
+    test('generates valid SVG string with valid dimensions', () => {
+        const config = { width: 10, height: 10, margin: 1 };
+        const results = {
+            largeCircles: [{ x: 5, y: 5, r: 2 }],
+            fillerCircles: []
+        };
+        const svg = generateSVGString(config, results, 'in');
+        assert.ok(svg.includes('viewBox="0 0 10 10"'));
+        assert.ok(svg.includes('width="10in"'));
+        assert.ok(svg.includes('height="10in"'));
+        assert.ok(svg.includes('<circle cx="5.0000" cy="5.0000" r="2"'));
+    });
+
+    test('handles NaN, Infinity, and negative bounds in viewBox by returning empty string', () => {
+        const config = { width: NaN, height: 10, margin: 1 };
+        const results = { largeCircles: [{ x: 5, y: 5, r: 2 }] };
+        const svg = generateSVGString(config, results, 'in');
+        assert.strictEqual(svg, '');
+
+        const config2 = { width: 10, height: -5, margin: 1 };
+        const svg2 = generateSVGString(config2, results, 'in');
+        assert.strictEqual(svg2, '');
+
+        const config3 = { width: Infinity, height: 10, margin: 1 };
+        const svg3 = generateSVGString(config3, results, 'in');
+        assert.strictEqual(svg3, '');
+    });
+
+    test('ignores circles with NaN or Infinity coordinates', () => {
+        const config = { width: 10, height: 10, margin: 1 };
+        const results = {
+            largeCircles: [{ x: NaN, y: 5, r: 2 }, { x: 5, y: 5, r: 2 }],
+            fillerCircles: [{ x: 1, y: Infinity, r: 1 }]
+        };
+        const svg = generateSVGString(config, results, 'in');
+        // It should include the valid circle but exclude the invalid ones
+        assert.ok(svg.includes('<circle cx="5.0000" cy="5.0000" r="2"'));
+        assert.ok(!svg.includes('NaN'));
+        assert.ok(!svg.includes('Infinity'));
+    });
 });
