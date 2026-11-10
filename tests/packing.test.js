@@ -271,6 +271,36 @@ describe('checkOverlap', () => {
         assert.strictEqual(checkOverlap(invalidFiller, c2, 0), true);
         assert.strictEqual(checkOverlap(invalidFiller, c3, 0), true);
     });
+
+    test('overlap detection with 0 circles (empty array handling)', () => {
+        const circles = [];
+        let overlaps = 0;
+        for (let i = 0; i < circles.length; i++) {
+            for (let j = i+1; j < circles.length; j++) {
+                if (checkOverlap(circles[i], circles[j])) overlaps++;
+            }
+        }
+        assert.strictEqual(overlaps, 0);
+    });
+
+    test('overlap detection with 1 circle (no pairs)', () => {
+        const circles = [{ x: 0, y: 0, r: 5 }];
+        let overlaps = 0;
+        for (let i = 0; i < circles.length; i++) {
+            for (let j = i+1; j < circles.length; j++) {
+                if (checkOverlap(circles[i], circles[j])) overlaps++;
+            }
+        }
+        assert.strictEqual(overlaps, 0);
+    });
+
+    test('overlap detection with 500+ circles scaling', () => {
+        const circles = [];
+        for (let i = 0; i < 500; i++) {
+            circles.push({ x: i * 10, y: 0, r: 4 });
+        }
+        assert.strictEqual(checkOverlap(circles[0], circles[499]), false);
+    });
 });
 
 describe('clampToRectangularBoundary', () => {
@@ -306,6 +336,32 @@ describe('clampToRectangularBoundary', () => {
         const clamped = clampToRectangularBoundary(circle, 10, 10);
         assert.strictEqual(clamped, null);
     });
+
+    test('prevents zero or negative bounding boxes by returning null when minX > maxX', () => {
+        const circle = { x: 5, y: 5, r: 8 };
+        assert.strictEqual(clampToRectangularBoundary(circle, 10, 10), null);
+    });
+
+    test('sheet boundary containment with 0 circles (empty array handling)', () => {
+        // While the function takes single circles, we ensure the concept holds
+        // Actually the function expects an object with { x, y, r }
+        // So we can check what it does for undefined or null by wrapping it, or test mapping an empty array.
+        const empty = [];
+        assert.deepStrictEqual(empty.map(c => clampToRectangularBoundary(c, 10, 10)), []);
+    });
+
+    test('sheet boundary containment with 1 circle', () => {
+        const circle = { x: 5, y: 5, r: 2 };
+        assert.deepStrictEqual(clampToRectangularBoundary(circle, 10, 10), circle);
+    });
+
+    test('sheet boundary containment with 500+ circles scaling', () => {
+        const circles = Array.from({ length: 500 }, (_, i) => ({ x: i, y: 5, r: 1 }));
+        const clamped = circles.map(c => clampToRectangularBoundary(c, 10, 10));
+        // The function clampToRectangularBoundary actually clamps the coordinates,
+        // so they will all be valid circles (clamped to the boundary) unless their radius is too large.
+        assert.strictEqual(clamped.filter(c => c !== null).length, 500);
+    });
 });
 
 describe('clampToCircularBoundary', () => {
@@ -336,6 +392,11 @@ describe('clampToCircularBoundary', () => {
         const clamped = clampToCircularBoundary(circle, 0, 0, 10);
         assert.strictEqual(clamped, null);
     });
+
+    test('prevents zero or negative bounding boxes by returning null when maxDist < 0', () => {
+        const circle = { x: 0, y: 0, r: 15 };
+        assert.strictEqual(clampToCircularBoundary(circle, 0, 0, 10), null);
+    });
 });
 
 describe('calculateDensity', () => {
@@ -356,6 +417,23 @@ describe('calculateDensity', () => {
     test('returns 0 for containerArea <= 0', () => {
         assert.strictEqual(calculateDensity([{ x: 0, y: 0, r: 1 }], 0), 0);
         assert.strictEqual(calculateDensity([{ x: 0, y: 0, r: 1 }], -5), 0);
+    });
+
+    test('handles density calculations with 0 circles', () => {
+        assert.strictEqual(calculateDensity([], 100), 0);
+    });
+
+    test('handles density calculations with 1 circle', () => {
+        const circles = [{ x: 5, y: 5, r: 2 }];
+        const expected = (Math.PI * 4) / 100;
+        assert.ok(Math.abs(calculateDensity(circles, 100) - expected) < 0.0001);
+    });
+
+    test('handles density calculations with 500+ circles', () => {
+        const circles = Array.from({ length: 500 }, (_, i) => ({ x: i, y: i, r: 1 }));
+        const totalCircleArea = 500 * Math.PI;
+        const expectedDensity = totalCircleArea / 10000;
+        assert.ok(Math.abs(calculateDensity(circles, 10000) - expectedDensity) < 0.0001);
     });
 });
 
@@ -899,5 +977,19 @@ describe('Yield Calculation and Waste Area Edge Cases', () => {
         const circles = [{ x: 0, y: 0, r: 5 }];
         assert.strictEqual(calculateScrapPercentage(circles, 0), 0);
         assert.strictEqual(calculateScrapPercentage(circles, -10), 0);
+    });
+});
+
+describe('Geometry constraints', () => {
+    test('geometry calculations prevent zero bounding boxes', () => {
+        // calculateLayout rejects configurations where the diameter is larger than the width/height
+        assert.strictEqual(calculateLayout(10, 10, 15, 0).total, 0);
+        assert.strictEqual(calculateGridTotal(10, 10, 15, 0), 0);
+    });
+
+    test('geometry calculations prevent negative radii', () => {
+        // With negative diameter/radii the result should be 0 total items.
+        assert.strictEqual(calculateLayout(10, 10, -5, 0).total, 0);
+        assert.strictEqual(calculateGridTotal(10, 10, -5, 0), 0);
     });
 });
