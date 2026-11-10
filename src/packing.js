@@ -19,14 +19,24 @@
 }(typeof window !== 'undefined' ? window : this, function () {
 
   const calculateGridTotal = (w, h, d, gap) => {
+      if (!Number.isFinite(w) || !Number.isFinite(h) || !Number.isFinite(d)) return 0;
+      if (w <= 0 || h <= 0 || d <= 0) return 0;
+
       const effectiveD = d + gap;
+      if (effectiveD <= 0) return 0;
+
       const nx = Math.floor((w - d + 0.000001) / effectiveD) + 1;
       const ny = Math.floor((h - d + 0.000001) / effectiveD) + 1;
       return Math.max(0, nx) * Math.max(0, ny);
   };
 
   const calculateLayout = (w, h, d, gap) => {
+      if (!Number.isFinite(w) || !Number.isFinite(h) || !Number.isFinite(d)) return { total: 0, rowData: [], dy: 0, numRows: 0 };
+      if (w <= 0 || h <= 0 || d <= 0) return { total: 0, rowData: [], dy: 0, numRows: 0 };
+
       const effectiveD = d + gap;
+      if (effectiveD <= 0) return { total: 0, rowData: [], dy: 0, numRows: 0 };
+
       const dy = effectiveD * (Math.sqrt(3) / 2);
       const numRows = Math.floor((h - d + 0.000001) / dy) + 1;
       if (numRows <= 0 || w < d) return { total: 0, rowData: [], dy: 0, numRows: 0 };
@@ -282,6 +292,46 @@
       return perimeter;
   };
 
+  const generateSVGString = (config, results, unit) => {
+      const { width, height, margin } = config;
+      const { largeCircles, fillerCircles } = results;
+
+      if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) {
+          return ''; // Invalid dimensions, returning empty SVG or similar handled externally if preferred
+      }
+
+      const safeWidth = Number.isFinite(width) && width > 0 ? width : 0;
+      const safeHeight = Number.isFinite(height) && height > 0 ? height : 0;
+
+      if (safeWidth === 0 || safeHeight === 0 || !largeCircles || largeCircles.length === 0) return '';
+
+      const safeMargin = Number.isFinite(margin) && margin >= 0 ? margin : 0;
+      const safeInnerWidth = Math.max(0, safeWidth - safeMargin * 2);
+      const safeInnerHeight = Math.max(0, safeHeight - safeMargin * 2);
+
+      let circles = '';
+      largeCircles.forEach(c => {
+          if (Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.r)) {
+              circles += `  <circle cx="${c.x.toFixed(4)}" cy="${c.y.toFixed(4)}" r="${c.r}" fill="none" stroke="blue" stroke-width="${unit === 'in' ? 0.01 : 0.2}" />\n`;
+          }
+      });
+
+      if (fillerCircles) {
+          fillerCircles.forEach(c => {
+              if (Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.r)) {
+                  circles += `  <circle cx="${c.x.toFixed(4)}" cy="${c.y.toFixed(4)}" r="${c.r}" fill="none" stroke="#f59e0b" stroke-width="${unit === 'in' ? 0.01 : 0.2}" />\n`;
+              }
+          });
+      }
+
+      const unitSuffix = unit === 'in' ? 'in' : 'mm';
+      return `<svg width="${safeWidth}${unitSuffix}" height="${safeHeight}${unitSuffix}" viewBox="0 0 ${safeWidth} ${safeHeight}" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0" y="0" width="${safeWidth}" height="${safeHeight}" fill="none" stroke="#ddd" stroke-width="${unit === 'in' ? 0.02 : 0.5}" />
+                    <rect x="${safeMargin}" y="${safeMargin}" width="${safeInnerWidth.toFixed(4)}" height="${safeInnerHeight.toFixed(4)}" fill="none" stroke="#ff0000" stroke-width="${unit === 'in' ? 0.01 : 0.2}" stroke-dasharray="${unit === 'in' ? 0.05 : 1}" opacity="0.5" />
+                    ${circles}
+                </svg>`;
+  };
+
   return {
     calculateGridTotal,
     calculateLayout,
@@ -301,7 +351,8 @@
     calculateVoidArea,
     calculateScrapPercentage,
     calculateConvexHull,
-    calculatePolygonPerimeter
+    calculatePolygonPerimeter,
+    generateSVGString
   };
 
 }));
