@@ -136,6 +136,7 @@ const {
     calculateLayout,
     getCirclePositions,
     checkOverlap,
+    fastFilterFillerCircles,
     clampToRectangularBoundary,
     clampToCircularBoundary,
     calculateDensity,
@@ -207,6 +208,70 @@ describe('getCirclePositions', () => {
         // but checking length and properties is a good sanity check
         assert.ok('x' in positionsRotated[0]);
         assert.ok('y' in positionsRotated[0]);
+    });
+});
+
+describe('fastFilterFillerCircles (Spatial Partitioning)', () => {
+    test('returns empty array if candidates array is empty', () => {
+        const largeCircles = [{ x: 10, y: 10, r: 5 }];
+        assert.deepStrictEqual(fastFilterFillerCircles([], largeCircles, 0), []);
+        assert.deepStrictEqual(fastFilterFillerCircles(null, largeCircles, 0), []);
+    });
+
+    test('returns all candidates if largeCircles array is empty', () => {
+        const candidates = [{ x: 10, y: 10, r: 2 }, { x: 20, y: 20, r: 2 }];
+        assert.deepStrictEqual(fastFilterFillerCircles(candidates, [], 0), candidates);
+        assert.deepStrictEqual(fastFilterFillerCircles(candidates, null, 0), candidates);
+    });
+
+    test('filters intersecting candidates using brute-force equivalence', () => {
+        const largeCircles = [
+            { x: 10, y: 10, r: 5 },
+            { x: 30, y: 10, r: 5 },
+            { x: 20, y: 20, r: 5 }
+        ];
+
+        // 1. (10, 20) -> intersects with (10, 10, r=5) [dist=10 < 5+2+gap(4)=11] -> true overlap
+        // 2. (30, 20) -> intersects with (30, 10, r=5) [dist=10 < 11] -> true overlap
+        // 3. (20, 10) -> intersects with (20, 20, r=5) [dist=10 < 11] -> true overlap
+        // 4. (50, 50) -> completely free
+        const fillerCandidates = [
+            { x: 10, y: 20, r: 2 },
+            { x: 30, y: 20, r: 2 },
+            { x: 20, y: 10, r: 2 },
+            { x: 50, y: 50, r: 2 }
+        ];
+
+        const gap = 4;
+
+        // Brute force implementation
+        const bruteForceResult = [];
+        for (const filler of fillerCandidates) {
+            let collision = false;
+            for (const large of largeCircles) {
+                if (checkOverlap(filler, large, gap)) {
+                    collision = true;
+                    break;
+                }
+            }
+            if (!collision) bruteForceResult.push(filler);
+        }
+
+        const spatialResult = fastFilterFillerCircles(fillerCandidates, largeCircles, gap);
+        assert.deepStrictEqual(spatialResult, bruteForceResult);
+        assert.strictEqual(spatialResult.length, 1);
+        assert.deepStrictEqual(spatialResult[0], { x: 50, y: 50, r: 2 });
+    });
+
+    test('handles gap correctly', () => {
+        const largeCircles = [{ x: 10, y: 10, r: 5 }];
+        const fillerCandidates = [{ x: 20, y: 10, r: 4 }];
+        // Dist = 10. Radii sum = 9.
+        // Gap 0: 10 >= 9 (no overlap) -> should be kept
+        assert.deepStrictEqual(fastFilterFillerCircles(fillerCandidates, largeCircles, 0), fillerCandidates);
+
+        // Gap 2: 10 < 11 (overlap) -> should be removed
+        assert.deepStrictEqual(fastFilterFillerCircles(fillerCandidates, largeCircles, 2), []);
     });
 });
 

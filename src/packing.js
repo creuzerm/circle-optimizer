@@ -131,6 +131,75 @@
       return (dx * dx + dy * dy) < (minDist * minDist) - 0.0001;
   };
 
+  const fastFilterFillerCircles = (fillerCandidates, largeCircles, gap = 0) => {
+      if (!fillerCandidates || fillerCandidates.length === 0) return [];
+      if (!largeCircles || largeCircles.length === 0) return [...fillerCandidates];
+
+      // Hoist invariant math outside the loop assuming uniform radii
+      const largeR = largeCircles[0].r;
+      const fillerR = fillerCandidates[0].r;
+      const minDist = largeR + fillerR + gap;
+      const minDistSq = minDist * minDist - 0.0001; // epsilon for floating point inaccuracies
+
+      // Set cell size to minDist
+      const cellSize = minDist;
+      const grid = new Map();
+
+      // We inline the key generation to avoid function call overhead in inner loops
+      for (let i = 0; i < largeCircles.length; i++) {
+          const circle = largeCircles[i];
+          const cx = Math.floor(circle.x / cellSize);
+          const cy = Math.floor(circle.y / cellSize);
+          const key = cx + "," + cy;
+          let cell = grid.get(key);
+          if (!cell) {
+              cell = [];
+              grid.set(key, cell);
+          }
+          cell.push(circle);
+      }
+
+      const result = [];
+      const offsets = [
+          [-1, -1], [0, -1], [1, -1],
+          [-1,  0], [0,  0], [1,  0],
+          [-1,  1], [0,  1], [1,  1]
+      ];
+
+      for (let i = 0; i < fillerCandidates.length; i++) {
+          const filler = fillerCandidates[i];
+          const cx = Math.floor(filler.x / cellSize);
+          const cy = Math.floor(filler.y / cellSize);
+          let collision = false;
+
+          for (let j = 0; j < 9; j++) {
+              const key = (cx + offsets[j][0]) + "," + (cy + offsets[j][1]);
+              const cell = grid.get(key);
+              if (cell) {
+                  for (let k = 0; k < cell.length; k++) {
+                      const large = cell[k];
+                      const dx = filler.x - large.x;
+                      if (dx >= minDist || dx <= -minDist) continue;
+                      const dy = filler.y - large.y;
+                      if (dy >= minDist || dy <= -minDist) continue;
+
+                      if ((dx * dx + dy * dy) < minDistSq) {
+                          collision = true;
+                          break;
+                      }
+                  }
+              }
+              if (collision) break;
+          }
+
+          if (!collision) {
+              result.push(filler);
+          }
+      }
+
+      return result;
+  };
+
   const clampToRectangularBoundary = (circle, width, height, margin = 0) => {
       let { x, y, r } = circle;
       const minX = margin + r;
@@ -339,6 +408,7 @@
     checkCircleCollision,
     isCircleInConvexHull,
     checkOverlap,
+    fastFilterFillerCircles,
     clampToRectangularBoundary,
     clampToCircularBoundary,
     calculateDensity,
