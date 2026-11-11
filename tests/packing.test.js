@@ -1184,6 +1184,47 @@ describe('generateSVGString', () => {
     });
 });
 
+describe('Circular Boundary Containment', () => {
+    test('nested circles strictly remain within circular boundary after clamping', () => {
+        const containerR = 100;
+        const containerX = 0;
+        const containerY = 0;
+        const margin = 5;
+
+        // Array of circles to test, some strictly inside, some overlapping, some fully outside
+        const circlesToTest = [
+            { x: 0, y: 0, r: 10 },        // Center
+            { x: 50, y: 0, r: 20 },       // Inside
+            { x: 80, y: 0, r: 20 },       // Overlapping edge
+            { x: 0, y: 90, r: 10 },       // Tangent to margin
+            { x: 100, y: 100, r: 10 },    // Fully outside
+            { x: -90, y: 0, r: 15 }       // Overlapping left edge
+        ];
+
+        let processed = 0;
+
+        for (const circle of circlesToTest) {
+            const clamped = clampToCircularBoundary(circle, containerX, containerY, containerR, margin);
+
+            // If the circle was too large to fit at all, clamped will be null
+            if (clamped !== null) {
+                processed++;
+                const distSq = (clamped.x - containerX) ** 2 + (clamped.y - containerY) ** 2;
+                const dist = Math.sqrt(distSq);
+
+                // Assert that all circle center distances from container origin plus radii remain strictly within container radius
+                // We add margin to verify it honors the usable area, but strictly check against container radius.
+                assert.ok(dist + clamped.r <= containerR, `Clamped circle exceeded circular boundary: dist=${dist}, r=${clamped.r}, containerR=${containerR}`);
+
+                // Assert it even respects the margin
+                assert.ok(dist + clamped.r + margin <= containerR + 0.0001, `Clamped circle exceeded circular boundary with margin: dist=${dist}, r=${clamped.r}, margin=${margin}, containerR=${containerR}`);
+            }
+        }
+
+        assert.ok(processed > 0, "Should process at least some circles into the boundary");
+    });
+});
+
 describe('Non-Square Container Aspect Ratio & Boundary Padding', () => {
     test('16:9 container respects margin padding and containment bounds', () => {
         const width = 160;
@@ -1237,6 +1278,19 @@ describe('Non-Square Container Aspect Ratio & Boundary Padding', () => {
             assert.ok(pos.y >= margin + pos.r - 0.0001, `y (${pos.y}) is less than min allowed`);
             assert.ok(pos.y <= height - margin - pos.r + 0.0001, `y (${pos.y}) is greater than max allowed`);
         }
+    });
+});
+
+const fs = require('fs');
+const path = require('path');
+
+describe('index.html Schema Verification', () => {
+    test('contains Schema.org JSON-LD structured data declaring WebApplication', () => {
+        const indexPath = path.join(__dirname, '../index.html');
+        const html = fs.readFileSync(indexPath, 'utf8');
+
+        assert.ok(html.includes('<script type="application/ld+json">'), "Missing JSON-LD script tag");
+        assert.ok(html.includes('"@type": "https://schema.org/WebApplication"'), "Missing WebApplication schema type");
     });
 });
 
