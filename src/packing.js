@@ -296,6 +296,19 @@
       return distSq >= threshold * threshold;
   };
 
+  const sanitizeString = (str) => {
+      if (typeof str !== 'string') str = String(str);
+      // Remove path traversal and illegal characters
+      // Use a loop to prevent nested traversals like ....// becoming ../
+      let prevStr = '';
+      let sanitized = str;
+      while (sanitized !== prevStr) {
+          prevStr = sanitized;
+          sanitized = sanitized.replace(/\.\.\//g, '');
+      }
+      return sanitized.replace(/[<>:"/\\|?*]/g, '');
+  };
+
   const calculateTotalArea = (circles) => {
       if (!circles || !Array.isArray(circles) || circles.length === 0) return 0;
       return circles.reduce((acc, c) => acc + (Math.PI * c.r * c.r), 0);
@@ -391,9 +404,12 @@
           });
       }
 
-      const unitSuffix = unit === 'in' ? 'in' : 'mm';
-      return `<svg width="${safeWidth}${unitSuffix}" height="${safeHeight}${unitSuffix}" viewBox="0 0 ${safeWidth} ${safeHeight}" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="0" y="0" width="${safeWidth}" height="${safeHeight}" fill="none" stroke="#ddd" stroke-width="${unit === 'in' ? 0.02 : 0.5}" />
+      const unitSuffix = sanitizeString(unit === 'in' ? 'in' : 'mm');
+      const safeWidthStr = sanitizeString(safeWidth);
+      const safeHeightStr = sanitizeString(safeHeight);
+
+      return `<svg width="${safeWidthStr}${unitSuffix}" height="${safeHeightStr}${unitSuffix}" viewBox="0 0 ${safeWidthStr} ${safeHeightStr}" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0" y="0" width="${safeWidthStr}" height="${safeHeightStr}" fill="none" stroke="#ddd" stroke-width="${unit === 'in' ? 0.02 : 0.5}" />
                     <rect x="${safeMargin}" y="${safeMargin}" width="${safeInnerWidth.toFixed(4)}" height="${safeInnerHeight.toFixed(4)}" fill="none" stroke="#ff0000" stroke-width="${unit === 'in' ? 0.01 : 0.2}" stroke-dasharray="${unit === 'in' ? 0.05 : 1}" opacity="0.5" />
                     ${circles}
                 </svg>`;
@@ -421,7 +437,8 @@
     calculateScrapPercentage,
     calculateConvexHull,
     calculatePolygonPerimeter,
-    generateSVGString
+    generateSVGString,
+    sanitizeString
   };
 
 }));

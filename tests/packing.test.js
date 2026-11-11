@@ -184,7 +184,8 @@ const {
     calculateVoidArea,
     calculateScrapPercentage,
     calculateConvexHull,
-    calculatePolygonPerimeter
+    calculatePolygonPerimeter,
+    sanitizeString
 } = require('../src/packing.js');
 
 describe('calculateGridTotal', () => {
@@ -1140,5 +1141,37 @@ describe('generateSVGString', () => {
         assert.ok(svg.includes('<circle cx="5.0000" cy="5.0000" r="2"'));
         assert.ok(!svg.includes('NaN'));
         assert.ok(!svg.includes('Infinity'));
+    });
+});
+
+describe('sanitizeString', () => {
+    test('strips path traversal patterns', () => {
+        const unsafeName = "../../../../etc/passwd_project.svg";
+        const sanitized = sanitizeString(unsafeName);
+        assert.strictEqual(sanitized, "etcpasswd_project.svg");
+    });
+
+    test('strips nested path traversal patterns safely', () => {
+        const unsafeName = "....//....//etc/passwd_project.svg";
+        const sanitized = sanitizeString(unsafeName);
+        assert.strictEqual(sanitized, "etcpasswd_project.svg");
+    });
+
+    test('strips illegal characters', () => {
+        const unsafeName = 'project<name>:"/\\|?*';
+        const sanitized = sanitizeString(unsafeName);
+        assert.strictEqual(sanitized, "projectname");
+    });
+
+    test('returns original string if no illegal chars', () => {
+        const safeName = 'my_awesome_project-123.svg';
+        const sanitized = sanitizeString(safeName);
+        assert.strictEqual(sanitized, safeName);
+    });
+
+    test('handles non-string inputs safely by converting to string', () => {
+        assert.strictEqual(sanitizeString(12345), '12345');
+        assert.strictEqual(sanitizeString(undefined), 'undefined');
+        assert.strictEqual(sanitizeString(null), 'null');
     });
 });
