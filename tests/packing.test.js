@@ -953,6 +953,46 @@ describe('calculateConvexHull', () => {
     });
 });
 
+describe('Optimized Packing and Containment Identity', () => {
+    test('getCirclePositions maintains exact positional mathematical baseline after invariant hoisting', () => {
+        const layout = PackingUtils.calculateLayout(100, 100, 10, 0);
+        const positions = PackingUtils.getCirclePositions(layout, 100, 100, 10, 0, 0, false);
+
+        assert.ok(positions.length > 0);
+
+        // Manual verification of first few elements
+        const r = 5;
+        const startX = 0; // margin + (packingW - maxRowWidth)/2 = 0 + (100 - 100)/2 = 0
+        const startY = 100 - (10 * 8.660254037844387 + 10); // Wait, patternH = 10 * 8.66025 + 10 = 96.6025. startY = (100 - 96.6025) / 2 = 1.6987
+
+        // Assert exact properties of known first circle to verify math hasn't diverged
+        assert.ok(Math.abs(positions[0].x - 5) < 0.0001);
+        assert.ok(positions[0].r === 5);
+
+        // Second row offset check
+        const secondRowCircle = positions.find(c => Math.abs(c.y - positions[0].y - 8.660254037844387) < 0.0001);
+        assert.ok(Math.abs(secondRowCircle.x - 10) < 0.0001); // offset is effectiveD / 2 = 5. startX + r + offset = 0 + 5 + 5 = 10
+    });
+
+    test('isCircleInConvexHull exact resolution after hoisting threshold constraints', () => {
+        const polygon = [
+            { x: 0, y: 0 },
+            { x: 20, y: 0 },
+            { x: 20, y: 20 },
+            { x: 0, y: 20 }
+        ];
+
+        // Should return true for exactly contained circle
+        assert.strictEqual(PackingUtils.isCircleInConvexHull({ x: 10, y: 10, r: 5 }, polygon), true);
+
+        // Should return false for overlapping/crossing edge
+        assert.strictEqual(PackingUtils.isCircleInConvexHull({ x: 18, y: 10, r: 5 }, polygon), false);
+
+        // Should return true for perfectly tangent circle with epsilon
+        assert.strictEqual(PackingUtils.isCircleInConvexHull({ x: 15, y: 10, r: 5 }, polygon), true);
+    });
+});
+
 describe('calculatePolygonPerimeter', () => {
     test('returns 0 for invalid polygons', () => {
         assert.strictEqual(calculatePolygonPerimeter([]), 0);
