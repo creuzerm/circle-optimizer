@@ -196,7 +196,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `circles_${config.width}x${config.height}${unit}.svg`;
+                a.download = window.PackingUtils.sanitizeString(`circles_${config.width}x${config.height}${unit}.svg`);
                 a.click();
             };
 
