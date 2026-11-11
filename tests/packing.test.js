@@ -131,6 +131,44 @@ describe('PackingUtils.isCircleInConvexHull', () => {
     });
 });
 
+describe('Geometry Boundary and Margin Assertions', () => {
+    test('exact circle-to-circle tangency distance assertions', () => {
+        const c1 = { x: 0, y: 0, r: 5 };
+        const c2 = { x: 10, y: 0, r: 5 }; // Exact tangency, dist = 10, r1+r2 = 10
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, 1e-8), false);
+        assert.strictEqual(PackingUtils.checkOverlap(c1, c2, 0), false);
+    });
+
+    test('sheet border margin offset calculations (margin > 0)', () => {
+        const circle = { x: 0, y: 0, r: 2 };
+        const clamped = PackingUtils.clampToRectangularBoundary(circle, 20, 20, 3);
+        // margin = 3, r = 2, so minX/minY should be 5
+        assert.strictEqual(clamped.x, 5);
+        assert.strictEqual(clamped.y, 5);
+    });
+
+    test('0 margin condition', () => {
+        const circle = { x: 0, y: 0, r: 2 };
+        const clamped = PackingUtils.clampToRectangularBoundary(circle, 20, 20, 0);
+        // margin = 0, r = 2, minX/minY should be 2
+        assert.strictEqual(clamped.x, 2);
+        assert.strictEqual(clamped.y, 2);
+    });
+
+    test('oversized circles exceeding sheet bounds', () => {
+        const circle = { x: 5, y: 5, r: 15 }; // Diameter 30 > width 20
+        const clamped = PackingUtils.clampToRectangularBoundary(circle, 20, 20, 0);
+        assert.strictEqual(clamped, null);
+    });
+
+    test('concentric circle rejection', () => {
+        const c1 = { x: 0, y: 0, r: 5 };
+        const c2 = { x: 0, y: 0, r: 3 }; // Concentric, should overlap
+        assert.strictEqual(PackingUtils.checkCircleCollision(c1, c2, 1e-8), true);
+        assert.strictEqual(PackingUtils.checkOverlap(c1, c2, 0), true);
+    });
+});
+
 const {
     calculateGridTotal,
     calculateLayout,
