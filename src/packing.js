@@ -303,6 +303,15 @@
       return distSq >= thresholdSq;
   };
 
+  const isCircleOutsidePolygon = (circle, polygon) => {
+      if (pointInPolygon(circle, polygon)) return false;
+      const threshold = circle.r - 0.0001;
+      if (threshold <= 0) return true;
+      const thresholdSq = threshold * threshold;
+      const distSq = distanceToPolygonEdgeSquared(circle, polygon);
+      return distSq >= thresholdSq;
+  };
+
   const sanitizeString = (str) => {
       if (typeof str !== 'string') str = String(str);
       // Remove path traversal and illegal characters
@@ -439,6 +448,7 @@
     pointInPolygon,
     distanceToPolygonEdge,
     isCircleInPolygon,
+    isCircleOutsidePolygon,
     calculateTotalArea,
     calculateVoidArea,
     calculateScrapPercentage,

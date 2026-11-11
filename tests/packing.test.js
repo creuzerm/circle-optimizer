@@ -180,6 +180,7 @@ const {
     calculateDensity,
     distanceToPolygonEdge,
     isCircleInPolygon,
+    isCircleOutsidePolygon,
     calculateTotalArea,
     calculateVoidArea,
     calculateScrapPercentage,
@@ -838,6 +839,49 @@ describe('isCircleInPolygon', () => {
         // slightly less than 2 due to floating point error, e.g. 1.999999
         const circle = { x: 1.999995, y: 5, r: 2 };
         assert.strictEqual(isCircleInPolygon(circle, squarePolygon), true);
+    });
+});
+
+describe('isCircleOutsidePolygon (Keep-out Obstacles)', () => {
+    const obstaclePolygon = [
+        { x: 5, y: 5 },
+        { x: 15, y: 5 },
+        { x: 15, y: 15 },
+        { x: 5, y: 15 }
+    ];
+
+    test('returns true when circle is completely outside', () => {
+        const circle = { x: 20, y: 20, r: 2 };
+        assert.strictEqual(isCircleOutsidePolygon(circle, obstaclePolygon), true);
+    });
+
+    test('returns false when circle is completely inside', () => {
+        const circle = { x: 10, y: 10, r: 2 };
+        assert.strictEqual(isCircleOutsidePolygon(circle, obstaclePolygon), false);
+    });
+
+    test('returns false when circle intersects edge from outside', () => {
+        const circle = { x: 4, y: 10, r: 2 };
+        // distance to left edge is 1, radius is 2, so it intersects
+        assert.strictEqual(isCircleOutsidePolygon(circle, obstaclePolygon), false);
+    });
+
+    test('returns false when circle intersects edge from inside', () => {
+        const circle = { x: 6, y: 10, r: 2 };
+        // distance to left edge is 1, radius is 2, so it intersects, and center is inside
+        assert.strictEqual(isCircleOutsidePolygon(circle, obstaclePolygon), false);
+    });
+
+    test('returns true for circle tangent to bounding edge from outside without false-positive collision', () => {
+        const circle = { x: 3, y: 10, r: 2 };
+        // distance to left edge is exactly 2, radius is 2. Should be true.
+        assert.strictEqual(isCircleOutsidePolygon(circle, obstaclePolygon), true);
+    });
+
+    test('returns true for floating point tangent inaccuracies', () => {
+        // slightly less than 2 due to floating point error, e.g. 1.999999
+        const circle = { x: 3.000005, y: 10, r: 2 };
+        assert.strictEqual(isCircleOutsidePolygon(circle, obstaclePolygon), true);
     });
 });
 
