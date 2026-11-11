@@ -1184,6 +1184,62 @@ describe('generateSVGString', () => {
     });
 });
 
+describe('Non-Square Container Aspect Ratio & Boundary Padding', () => {
+    test('16:9 container respects margin padding and containment bounds', () => {
+        const width = 160;
+        const height = 90;
+        const diameter = 10;
+        const margin = 5;
+        // The usable area excludes the margins
+        const layout = calculateLayout(width - 2 * margin, height - 2 * margin, diameter, 0);
+        const positions = getCirclePositions(layout, width, height, diameter, margin, 0, false);
+
+        assert.ok(positions.length > 0, "Should generate circles for 16:9 container");
+        for (const pos of positions) {
+            // Container bound assertions (center coordinates should not exceed dims - r - margin)
+            assert.ok(pos.x >= margin + pos.r - 0.0001, `x (${pos.x}) is less than min allowed (${margin + pos.r})`);
+            assert.ok(pos.x <= width - margin - pos.r + 0.0001, `x (${pos.x}) is greater than max allowed (${width - margin - pos.r})`);
+            assert.ok(pos.y >= margin + pos.r - 0.0001, `y (${pos.y}) is less than min allowed (${margin + pos.r})`);
+            assert.ok(pos.y <= height - margin - pos.r + 0.0001, `y (${pos.y}) is greater than max allowed (${height - margin - pos.r})`);
+        }
+    });
+
+    test('4:1 container respects margin padding and containment bounds', () => {
+        const width = 200;
+        const height = 50;
+        const diameter = 12;
+        const margin = 4;
+        const layout = calculateLayout(width - 2 * margin, height - 2 * margin, diameter, 0);
+        const positions = getCirclePositions(layout, width, height, diameter, margin, 0, false);
+
+        assert.ok(positions.length > 0, "Should generate circles for 4:1 container");
+        for (const pos of positions) {
+            assert.ok(pos.x >= margin + pos.r - 0.0001, `x (${pos.x}) is less than min allowed`);
+            assert.ok(pos.x <= width - margin - pos.r + 0.0001, `x (${pos.x}) is greater than max allowed`);
+            assert.ok(pos.y >= margin + pos.r - 0.0001, `y (${pos.y}) is less than min allowed`);
+            assert.ok(pos.y <= height - margin - pos.r + 0.0001, `y (${pos.y}) is greater than max allowed`);
+        }
+    });
+
+    test('1:4 container (rotated) respects margin padding and containment bounds', () => {
+        const width = 50;
+        const height = 200;
+        const diameter = 12;
+        const margin = 3;
+        // For rotated, the packing area width is height and height is width
+        const layout = calculateLayout(height - 2 * margin, width - 2 * margin, diameter, 0);
+        const positions = getCirclePositions(layout, width, height, diameter, margin, 0, true);
+
+        assert.ok(positions.length > 0, "Should generate circles for rotated 1:4 container");
+        for (const pos of positions) {
+            assert.ok(pos.x >= margin + pos.r - 0.0001, `x (${pos.x}) is less than min allowed`);
+            assert.ok(pos.x <= width - margin - pos.r + 0.0001, `x (${pos.x}) is greater than max allowed`);
+            assert.ok(pos.y >= margin + pos.r - 0.0001, `y (${pos.y}) is less than min allowed`);
+            assert.ok(pos.y <= height - margin - pos.r + 0.0001, `y (${pos.y}) is greater than max allowed`);
+        }
+    });
+});
+
 describe('sanitizeString', () => {
     test('strips path traversal patterns', () => {
         const unsafeName = "../../../../etc/passwd_project.svg";
