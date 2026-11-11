@@ -76,11 +76,15 @@
       const startX = margin + (packingW - maxRowWidth) / 2;
       const startY = margin + (packingH - patternH) / 2;
 
+      const startX_R = startX + r;
+      const startY_R = startY + r;
+
       const circles = [];
       layout.rowData.forEach((row, rowIndex) => {
-          const py = startY + r + (rowIndex * layout.dy);
+          const py = startY_R + (rowIndex * layout.dy);
+          const rowBaseX = startX_R + row.offset;
           for (let i = 0; i < row.count; i++) {
-              const px = startX + r + (i * effectiveD) + row.offset;
+              const px = rowBaseX + (i * effectiveD);
               const cx = isRotated ? py : px;
               const cy = isRotated ? px : py;
               circles.push({ x: cx, y: cy, r });
@@ -100,6 +104,7 @@
       if (!polygon || polygon.length < 3) return false;
 
       const threshold = circle.r - epsilon;
+      const thresholdSq = threshold * threshold;
 
       for (let i = 0; i < polygon.length; i++) {
           const p1 = polygon[i];
@@ -115,11 +120,11 @@
           const cross = edgeX * cy - edgeY * cx;
 
           if (threshold > 0) {
-              if (cross < 0 || (cross * cross) / edgeSq < threshold * threshold) {
+              if (cross < 0 || (cross * cross) / edgeSq < thresholdSq) {
                   return false;
               }
           } else {
-              if (cross < 0 && (cross * cross) / edgeSq > threshold * threshold) {
+              if (cross < 0 && (cross * cross) / edgeSq > thresholdSq) {
                   return false;
               }
           }
@@ -232,9 +237,10 @@
       const maxDist = containerR - margin - r;
 
       if (maxDist < 0) return null;
+      const maxDistSq = maxDist * maxDist;
 
       // Use squared distance comparison to avoid redundant Math.sqrt in candidate rejection loop
-      if (distSq <= maxDist * maxDist) {
+      if (distSq <= maxDistSq) {
           return { ...circle };
       }
 
@@ -292,8 +298,9 @@
       if (!pointInPolygon(circle, polygon)) return false;
       const threshold = circle.r - 0.0001;
       if (threshold <= 0) return true;
+      const thresholdSq = threshold * threshold;
       const distSq = distanceToPolygonEdgeSquared(circle, polygon);
-      return distSq >= threshold * threshold;
+      return distSq >= thresholdSq;
   };
 
   const sanitizeString = (str) => {
